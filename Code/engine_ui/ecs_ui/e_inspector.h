@@ -7,6 +7,7 @@
 #include "ecs_hierarchy.h"
 #include "c_inspectors/c_ui_includeall.h"
 
+extern sque_vec<SQUE_Entity> entities;
 extern sque_vec<sque_vec<SQUE_Component>> components_refs;
 
 //#include "../../ecs/components/transform.h"
@@ -14,21 +15,12 @@ extern sque_vec<sque_vec<SQUE_Component>> components_refs;
 
 typedef void(*UIComponentUpdate)(uint32_t);
 
-struct Inspected_Entity
-{
-	uint32_t id;
-	std::string name;
-	uint32_t tag_refs[5];
-	sque_vec<uint32_t> components_ids;
-	sque_vec<UIComponentUpdate> components_gui;
-};
-
 class SQUE_Inspector : public SQUE_UI_Item
 {
 	//Inspected_Entity inspected;
 
 	uint32_t entity_id;
-	std::string entity_name;
+	char entity_name[32];
 	uint32_t tag_refs[5];
 	sque_vec<uint32_t> component_ids;
 	sque_vec<UIComponentUpdate> components_gui;
@@ -61,16 +53,18 @@ public:
 			// Better a single switch and then iterate all inspectors
 			}
 			components_gui.push_back(update_func);
+			component_ids.push_back(ref[i].ref);
 		}
 	}
 
-	void SetInspectEntity(SQUE_H_Entry& entity)
+	void SetInspectEntity(SQUE_H_Entry& entry)
 	{
-		name = entity.name;
-		memcpy(tag_refs, entities[entity.ref].tag_refs, sizeof(uint32_t) * 5);
-		entity_id = entity.entity_id;
+		SQUE_Entity& entity = entities[entry.ref];
+		memcpy(entity_name, entity.name, 32);
+		memcpy(tag_refs, entity.tag_refs, sizeof(uint32_t) * 5);
+		entity_id = entity.id;
 
-		SetComponentFuncs(entities[entity.ref].comp_ref);
+		SetComponentFuncs(entities[entry.ref].comp_ref);
 	}
 
 	void Update(float dt) final

@@ -10,4 +10,7 @@ typedef struct SQUE_Transform
     glm::vec3 scale;
 } SQUE_Transform;
 
+uint32_t SQUE_ECS_AddTransform();
+uint32_t SQUE_ECS_AddTransform(uint32_t par_ref);
+
 #endif

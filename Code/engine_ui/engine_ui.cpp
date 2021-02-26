@@ -181,7 +181,8 @@ void EngineUI_Init()
     
     hier.Init();
     inspector.Init();
-    
+    hier.SetInspector(&inspector);
+
     // MenuBar Default starts
     menu_bar.Init();
     menu_bar.RegisterMenuItem(&hier.active, hier.name);

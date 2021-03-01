@@ -117,7 +117,9 @@ public:
                 }
                 else
                 {
-                    // Send the selected id for parenting
+                    entry.ref = SQUE_ECS_NewChildEntity(SQUE_ECS_GetEntityRef(selected[0]->ref).id);
+                    selected[0]->child_refs.push_back(entries.size());
+
                 }
                 entries.push_back(entry);
 
@@ -129,25 +131,33 @@ public:
                 SQUE_H_Entry entry;
                 entry.state = NULL;
                 
+                // Declare Base Components non-empty
+                SQUE_Component transform;
+
+                // Parenting?
                 if (selected.size() != 1)
                 {
                     entry.ref = SQUE_ECS_NewEntity();
                     base_entries.push_back(entry);
+
+                    transform = SQUE_ECS_AddTransform();
                 }
                 else
                 {
-                    // Send the selected id for parenting
+                    entry.ref = SQUE_ECS_NewChildEntity(SQUE_ECS_GetEntityRef(selected[0]->ref).id);
+                    selected[0]->child_refs.push_back(entries.size());
+
                 }
+
+                // Add Components to ECS
+                SQUE_ECS_AddComponent(entry.ref, transform);
+
+                // Push entry
                 entries.push_back(entry);
                 
-
+                // Change Entity name raw
                 SQUE_Entity& entity = SQUE_ECS_GetEntityRef(entry.ref);
                 memcpy(entity.name, "New_Entity", sizeof("New_Entity"));
-
-                SQUE_Component transform = SQUE_ECS_AddTransform(); // Take care of selected object as parent
-                SQUE_ECS_AddComponent(entry.ref, transform);
-                                                                  //c_ref.try_insert(transform);
-
             }
             ImGui::MenuItem("Delete Selected");
             ImGui::MenuItem("Copy Selected");
@@ -194,7 +204,8 @@ public:
                 selected.push_back(&entry);
             }
             SET_FLAG(entry.state, SQES_SELECTED);
-            if (!is_selected) inspector->SetInspectEntity(entry);
+            if (!is_selected) 
+                inspector->SetInspectEntity(entry);
         }
         if (open)
         {
@@ -227,6 +238,16 @@ public:
         
         if (ImGui::Begin(name, &active))
         {
+            if (ImGui::IsWindowHovered() && ImGui::IsMouseClicked(0))
+            {
+                for (uint16_t i = 0; i < entries.size(); ++i)
+                    CLR_FLAG(entries[i].state, SQES_SELECTED);
+                for (uint16_t i = 0; i < base_entries.size(); ++i)
+                    CLR_FLAG(base_entries[i].state, SQES_SELECTED);
+
+                selected.clear();
+            }
+
             UpdateRMMenu();
 
             for (uint16_t i = 0; i < base_entries.size(); ++i)

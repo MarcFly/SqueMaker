@@ -19,6 +19,7 @@ uint32_t SQUE_MSG_DeclareSubject(const char* subject)
     subj.subject = subject;
     messages.push_back(sque_vec<SQUE_Message>());
     subj.ref = messages.size()-1;
+    subjects.push_back(subj);
     return subj.ref;
 }
 
@@ -33,8 +34,8 @@ void SQUE_MSG_SubscribeToSubject(uint32_t subscriber_ref, const char* subject)
     // Generate a number from string
     // find string in subjects
     // add the reference
-    //messagers[subscriber_ref]->subjects.push_back(subject_ref);
-    //subjects[subject_ref].subscribers.push_back(subscriber_ref);
+    // messagers[subscriber_ref]->subjects.push_back(subject_ref);
+    // subjects[subject_ref].subscribers.push_back(subscriber_ref);
 }
 
 void SQUE_MSG_SendMessage(SQUE_Message message)

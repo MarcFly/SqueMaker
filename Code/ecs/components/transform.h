@@ -14,4 +14,5 @@ typedef struct SQUE_Transform
 
 SQUE_Component SQUE_ECS_AddTransform();
 SQUE_Component SQUE_ECS_AddTransform(uint32_t par_ref);
+
 #endif

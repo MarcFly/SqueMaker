@@ -24,6 +24,7 @@ class SQUE_Inspector : public SQUE_UI_Item
 	uint32_t tag_refs[5];
 	sque_vec<uint32_t> component_ids;
 	sque_vec<UIComponentUpdate> components_gui;
+	sque_vec<std::string> components_strs;
 
 	bool inspecting;
 
@@ -41,6 +42,8 @@ public:
 	void SetComponentFuncs(uint32_t component_ref)
 	{
 		components_gui.clear();
+		component_ids.clear();
+		components_strs.clear();
 		sque_vec<SQUE_Component>& ref = components_refs[component_ref];
 		for (uint16_t i = 0; i < ref.size(); ++i)
 		{
@@ -49,6 +52,7 @@ public:
 			{
 			case SQUE_ECS_TRANSFORM:
 				update_func = InspectorTransform;
+				components_strs.push_back(std::string("Transform##") + std::to_string(i)); // prob bad, good enough for simplicity
 				break;
 			// Better a single switch and then iterate all inspectors
 			}
@@ -74,7 +78,7 @@ public:
 			uint16_t s = components_gui.size();
 			for (uint16_t i = 0; i < s; ++i)
 			{
-				if (ImGui::CollapsingHeader("test"))
+				if (ImGui::CollapsingHeader(components_strs[i].c_str()))
 				{
 					components_gui[i](component_ids[i]);
 				}

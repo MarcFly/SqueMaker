@@ -12,9 +12,9 @@ typedef struct SQUE_Subject
 
 typedef struct SQUE_Message
 {
-    uint32_t subject_id;
-    void* data;
-    uint32_t data_size;
+    uint32_t subject_id = -1;
+    void* data = NULL;
+    uint32_t data_size = 0;
 
     constexpr bool operator()(const SQUE_Message left, const SQUE_Message msg) const
     {
@@ -28,32 +28,31 @@ typedef struct SQUE_Message
 
 } SQUE_Message;
 
-typedef struct SQUE_Subscriber
-{
-    char name[32];
-    sque_vec<SQUE_Message>* inbox;
-    sque_vec<uint32_t> subjects;
-} SQUE_Subscriber;
 
 
 class SQUE_Messager
 {
+    
+    
 public:
     char name[32] = "InvalidName";
-    sque_vec<SQUE_Message> inbox;
-    sque_vec<SQUE_Subject> subjects;
     uint32_t sub_ref;
+    sque_vec<uint32_t> subjects;
     SQUE_Messager(){};
+    sque_vec<SQUE_Message> inbox;
+
     virtual void RegisterSubscriber() {};
     virtual void DeclareSubjects() {};
     virtual void SubscribeToSubjects() {};
+
 };
 
 // First Initialization
-uint32_t SQUE_MSG_RegisterSubscriber(const char* name, sque_vec<SQUE_Message>* inbox);
+uint32_t SQUE_MSG_RegisterSubscriber(SQUE_Messager* messager);
 uint32_t SQUE_MSG_DeclareSubject(const char* subject);
 // 2nd Set Initialization
 void SQUE_MSG_SubscribeToSubject(uint32_t subscriber_ref, uint32_t subject_ref);
+void SQUE_MSG_SubscribeToSubjectString(uint32_t subscriber_ref, const char* subject);
 // At Start of update
 // DeliverMessages...
 // Whenever

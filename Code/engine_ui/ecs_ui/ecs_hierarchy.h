@@ -37,18 +37,20 @@ public:
     void RegisterSubscriber() final
     {
         memcpy(name, "ECS_Hierarchy", strlen("ECS_Hierarchy") + 1);
-        sub_ref = SQUE_MSG_RegisterSubscriber(name, &inbox);
+        sub_ref = SQUE_MSG_RegisterSubscriber(this);
     }
 
     void DeclareSubjects() final
     {
+        subjects.push_back(SQUE_MSG_DeclareSubject("NewEngineEntity"));
         // Declare Custom Subjects
     }
 
     void SubscribeToSubjects() final
     {
-        for (uint16_t i = 0; i < subjects.size(); ++i)
-            SQUE_MSG_SubscribeToSubject(sub_ref, subjects[i].ref);
+        // Subscribe to subjects you want by name
+        // SQUE_MSG_SubscribeToSubject(sub_ref, "NewUIEntity");
+        SQUE_MSG_SubscribeToSubject(sub_ref, subjects[0]);
     }
 };
 
@@ -217,7 +219,11 @@ public:
 
     void Update(float dt) final
     {
-        //UpdateEntries();
+        for (uint16_t i = 0; i < msgr.inbox.size(); ++i)
+        {
+            // take care of messages
+        }
+        msgr.inbox.clear();
         
         if (ImGui::Begin(name, &active))
         {

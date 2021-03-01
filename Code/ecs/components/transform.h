@@ -3,6 +3,8 @@
 
 #include <squelib.h>
 #include <glm/detail/type_quat.hpp>
+#include "../ecs.h"
+
 typedef struct SQUE_Transform
 {
     glm::vec3 position;
@@ -10,7 +12,6 @@ typedef struct SQUE_Transform
     glm::vec3 scale;
 } SQUE_Transform;
 
-uint32_t SQUE_ECS_AddTransform();
-uint32_t SQUE_ECS_AddTransform(uint32_t par_ref);
-
+SQUE_Component SQUE_ECS_AddTransform();
+SQUE_Component SQUE_ECS_AddTransform(uint32_t par_ref);
 #endif

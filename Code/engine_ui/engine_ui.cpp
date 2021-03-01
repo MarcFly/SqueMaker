@@ -160,6 +160,8 @@ static SQUE_Inspector inspector;
 static SQUE_Hierarchy hier;
 static SQUE_MenuBar menu_bar;
 
+static sque_vec<SQUE_Messager*> messagers;
+
 void EngineUI_Init()
 {
     //IMGUI_CHECKVERSION();
@@ -189,6 +191,15 @@ void EngineUI_Init()
     menu_bar.RegisterMenuItem(&inspector.active, inspector.name);
 
     //io.ConfigWindowsResizeFromEdges = true; // ImguiBackend Has Mouse Cursor
+
+    for (uint16_t i = 0; i < messagers.size(); ++i)
+    {
+        messagers[i]->RegisterSubscriber();
+        messagers[i]->DeclareSubjects();
+    }
+    for (uint16_t i = 0; i < messagers.size(); ++i)
+        messagers[i]->SubscribeToSubjects();
+
 }
 
 void EngineUI_RegisterItem(SQUE_UI_Item* item)
@@ -196,6 +207,11 @@ void EngineUI_RegisterItem(SQUE_UI_Item* item)
     items.push_back(item);
     if (item->active) active_items.push_back(item->id);
     item->id.pos = items.size()-1;
+}
+
+void EngineUI_RegisterMessager(SQUE_Messager* msgr)
+{
+    messagers.push_back(msgr);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

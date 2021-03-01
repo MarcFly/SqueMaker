@@ -3,6 +3,7 @@
 
 #include <imgui.h>
 #include <squelib.h>
+#include "../messages/messages.h"
 
 struct SQUE_UI_Id
 {
@@ -50,6 +51,7 @@ public:
 void EngineUI_Init();
 void EngineUI_DefaultTheme();
 void EngineUI_RegisterItem(SQUE_UI_Item* item);
+void EngineUI_RegisterMessager(SQUE_Messager* msgr);
 
 void EngineUI_RequireUpdate(bool window_state);
 void EngineUI_Update(float dt);

@@ -13,17 +13,14 @@ enum ENTRY_STATE
 
 struct SQUE_H_Entry
 {
-    uint32_t state;
-    uint32_t ref;
+    uint32_t state = NULL;
+    uint32_t ref = -1;
+    sque_vec<uint32_t> child_refs;
+    bool child_added = false;
 };
 
 #include "./e_inspector.h"
 #include <ecs/ecs.h>
-extern sque_vec<SQUE_Entity> entities;
-extern sque_vec<SQUE_Entity> base_entities;
-extern sque_vec<sque_vec<uint32_t>> children_refs;
-extern sque_vec<sque_vec<SQUE_Component>> components_refs;
-extern sque_vec<char[32]> tags;
 
 sque_vec<SQUE_H_Entry> base_entries;
 sque_vec<SQUE_H_Entry> entries;
@@ -34,11 +31,34 @@ static ImGuiTreeNodeFlags node_flags = ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTre
 
 // When opening an entity, it is important to keep 
 
+class SQUE_Hier_Messager : public SQUE_Messager
+{
+public:
+    void RegisterSubscriber() final
+    {
+        memcpy(name, "ECS_Hierarchy", strlen("ECS_Hierarchy") + 1);
+        sub_ref = SQUE_MSG_RegisterSubscriber(name, &inbox);
+    }
+
+    void DeclareSubjects() final
+    {
+        // Declare Custom Subjects
+    }
+
+    void SubscribeToSubjects() final
+    {
+        for (uint16_t i = 0; i < subjects.size(); ++i)
+            SQUE_MSG_SubscribeToSubject(sub_ref, subjects[i].ref);
+    }
+};
+
 class SQUE_Hierarchy : public SQUE_UI_Item
 {
     sque_vec<SQUE_H_Entry*> selected;
     SQUE_RMPopupMenu rm_menu;
     SQUE_Inspector* inspector;
+
+    SQUE_Hier_Messager msgr;
 
 public:
 
@@ -47,22 +67,16 @@ public:
     {
         // brute force reconstruct
         base_entries.clear();
+        SQUE_ECS_UpdateBaseEntityList();
+        sque_vec<SQUE_Entity>& base_entities = SQUE_ECS_GetNoParents();
         uint32_t entity_s = base_entities.size();
-        for (int i = 0; i < entity_s; ++i)
+        entries.clear();
+        for (uint32_t i = 0; i < entity_s; ++i)
         {
             SQUE_H_Entry e;
             e.state = NULL;
             e.ref = i;
             base_entries.push_back(e);
-        }
-
-        entries.clear();
-        entity_s = entities.size();
-        for (int i = 0; i < entity_s; ++i)
-        {
-            SQUE_H_Entry e; 
-            e.state = NULL;
-            e.ref = i;
             entries.push_back(e);
         }
     }
@@ -74,8 +88,10 @@ public:
         UpdateEntries();
 
         name = "ECS_Hierarchy";
-        rm_menu.flags = ImGuiHoveredFlags_ChildWindows || ImGuiHoveredFlags_RootWindow;;
+        rm_menu.flags = ImGuiHoveredFlags_ChildWindows || ImGuiHoveredFlags_RootWindow;
         rm_menu.container_name = name;
+
+        EngineUI_RegisterMessager(&msgr);
     }
 
     void SetInspector(SQUE_Inspector* insp_p) { inspector = insp_p; }
@@ -90,44 +106,45 @@ public:
             if(ImGui::MenuItem("Empty Entity"))
             {
                 SQUE_H_Entry entry;
-                SQUE_Entity entity;
-                memcpy(entity.name, "Empty_Entity", sizeof("Empty_Entity"));
-                entity.id = SQUE_RNG();
-                entity.children_ref = children_refs.try_insert(sque_vec<uint32_t>());
-                entity.comp_ref = components_refs.try_insert(sque_vec<SQUE_Component>());
-                
-                entry.ref = entities.try_insert(entity);
                 entry.state = NULL;
-                entries.push_back(entry);
+
                 if (selected.size() != 1)
                 {
-                    base_entities.try_insert(entity);
+                    entry.ref = SQUE_ECS_NewEntity();
                     base_entries.push_back(entry);
                 }
+                else
+                {
+                    // Send the selected id for parenting
+                }
+                entries.push_back(entry);
+
+                SQUE_Entity& entity = SQUE_ECS_GetEntityRef(entry.ref);
+                memcpy(entity.name, "Empty_Entity", sizeof("Empty_Entity"));
             }
             if (ImGui::MenuItem("New Entity"))
             {
                 SQUE_H_Entry entry;
-                SQUE_Entity entity;
-                memcpy(entity.name, "New_Entity", sizeof("New_Entity"));
-                entity.id = SQUE_RNG();
-                entity.children_ref = children_refs.try_insert(sque_vec<uint32_t>());
-                entity.comp_ref = components_refs.try_insert(sque_vec<SQUE_Component>());
-
-                entry.ref = entities.try_insert(entity);
                 entry.state = NULL;
-                entries.push_back(entry);
+                
                 if (selected.size() != 1)
                 {
-                    base_entities.try_insert(entity);
+                    entry.ref = SQUE_ECS_NewEntity();
                     base_entries.push_back(entry);
                 }
+                else
+                {
+                    // Send the selected id for parenting
+                }
+                entries.push_back(entry);
+                
 
-                sque_vec<SQUE_Component>& c_ref = components_refs[entity.comp_ref];
-                SQUE_Component transform;
-                transform.type = SQUE_ECS_TRANSFORM;
-                transform.ref = SQUE_ECS_AddTransform(); // Take care of selected object as parent
-                c_ref.try_insert(transform);
+                SQUE_Entity& entity = SQUE_ECS_GetEntityRef(entry.ref);
+                memcpy(entity.name, "New_Entity", sizeof("New_Entity"));
+
+                SQUE_Component transform = SQUE_ECS_AddTransform(); // Take care of selected object as parent
+                SQUE_ECS_AddComponent(entry.ref, transform);
+                                                                  //c_ref.try_insert(transform);
 
             }
             ImGui::MenuItem("Delete Selected");
@@ -144,13 +161,16 @@ public:
 
     void UpdateEntry(SQUE_H_Entry& entry)
     {
-        SQUE_Entity& entity = base_entities[entry.ref];
-        sque_vec<uint32_t>& children = children_refs[entity.children_ref];
-        bool selected = CHK_FLAG(entry.state, SQES_SELECTED);
+        SQUE_Entity& entity = SQUE_ECS_GetEntityRef(entry.ref);
+        sque_vec<uint32_t> children = SQUE_ECS_GetChildren(entity.children_ref);
+        bool is_selected = CHK_FLAG(entry.state, SQES_SELECTED);
+        
         ImGuiTreeNodeFlags tmp_flags = node_flags 
             | ((children.size() == 0) * ImGuiTreeNodeFlags_Leaf)
-            | (selected * ImGuiTreeNodeFlags_Selected);
+            | (is_selected * ImGuiTreeNodeFlags_Selected);
+        
         bool open = ImGui::TreeNodeEx(&entity.id, tmp_flags, entity.name);
+        
         if (ImGui::IsItemClicked())
         {
             
@@ -163,15 +183,33 @@ public:
                     CLR_FLAG(entries[i].state, SQES_SELECTED);
                 for (uint16_t i = 0; i < base_entries.size(); ++i)
                     CLR_FLAG(base_entries[i].state, SQES_SELECTED);
+
+                selected.clear();
+                selected.push_back(&entry);
+            }
+            else
+            {
+                selected.push_back(&entry);
             }
             SET_FLAG(entry.state, SQES_SELECTED);
-            if (!selected) inspector->SetInspectEntity(entry);
+            if (!is_selected) inspector->SetInspectEntity(entry);
         }
         if (open)
         {
+            if (!entry.child_added)
+            {
+                for (uint16_t i = 0; i < children.size(); ++i)
+                {
+                    SQUE_H_Entry child;
+                    child.ref = children[i];
+                    entries.push_back(child);
+                    entry.child_refs.push_back(entries.size() - 1);
+                }
+            }
             SET_FLAG(entry.state, SQES_OPENED);
             for (uint16_t i = 0; i < children.size(); ++i)
-                UpdateEntry(entries[children[i]]);
+                UpdateEntry(entries[entry.child_refs[i]]);
+            
             ImGui::TreePop();
         }
         else CLR_FLAG(entry.state, SQES_OPENED);
@@ -179,8 +217,7 @@ public:
 
     void Update(float dt) final
     {
-        if (base_entries.populated() != base_entities.populated()) 
-            UpdateEntries(); // naive update, should be more of a message system
+        //UpdateEntries();
         
         if (ImGui::Begin(name, &active))
         {

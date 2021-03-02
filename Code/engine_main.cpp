@@ -1,6 +1,6 @@
 #include <squelib.h>
 #include <engine_ui/engine_ui.h>
-
+#include <ecs/ecs.h>
 int main(int argc, char** argv)
 {
     // Libraries Init
@@ -28,7 +28,8 @@ int main(int argc, char** argv)
         SQUE_CHECK_RENDER_ERRORS();
     }
 
-
+    SQUE_ECS_EarlyDestruct();
+    
     // CleanUp Modules
     EngineUI_CleanUp();
 

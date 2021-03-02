@@ -26,7 +26,9 @@ struct SQUE_Socket
 
 enum ECS_COMPONENTS
 {
+	SQUE_ECS_UNKNOWN = -1,
 	SQUE_ECS_TRANSFORM = 0,
+	SQUE_ECS_DRAWABLE,
 
 };
 
@@ -47,10 +49,13 @@ sque_vec<uint32_t>& SQUE_ECS_GetChildren(const uint32_t children_ref);
 uint32_t SQUE_ECS_NewEntity();
 uint32_t SQUE_ECS_NewChildEntity(const uint32_t par_id = -1);
 
+uint32_t SQUE_ECS_GetComponentRef(const uint32_t entity_ref, const uint32_t component_type);
 void SQUE_ECS_AddComponent(const uint32_t entity_ref, SQUE_Component comp);
 
 void SQUE_ECS_UpdateBaseEntityList();
 sque_vec<SQUE_Entity>& SQUE_ECS_GetNoParents();
 sque_vec<SQUE_Entity>& SQUE_ECS_GetEntities();
+
+void SQUE_ECS_EarlyDestruct();
 
 #endif

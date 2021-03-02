@@ -16,7 +16,6 @@ struct SQUE_H_Entry
     uint32_t state = NULL;
     uint32_t ref = -1;
     sque_vec<uint32_t> child_refs;
-    bool child_added = false;
 };
 
 #include "./e_inspector.h"
@@ -27,7 +26,7 @@ sque_vec<SQUE_H_Entry> entries;
 static ImGuiTreeNodeFlags node_flags = ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_OpenOnDoubleClick | ImGuiTreeNodeFlags_SpanFullWidth;
 
 #include <imgui_internal.h>
-#include "../../ecs/components/transform.h"
+#include "../../ecs/components/components_includeall.h"
 
 // When opening an entity, it is important to keep 
 
@@ -133,6 +132,7 @@ public:
                 
                 // Declare Base Components non-empty
                 SQUE_Component transform;
+                SQUE_Component drawable;
 
                 // Parenting?
                 if (selected.size() != 1)
@@ -141,16 +141,25 @@ public:
                     base_entries.push_back(entry);
 
                     transform = SQUE_ECS_AddTransform();
+                    drawable = SQUE_ECS_AddDrawable();
                 }
                 else
                 {
                     entry.ref = SQUE_ECS_NewChildEntity(SQUE_ECS_GetEntityRef(selected[0]->ref).id);
                     selected[0]->child_refs.push_back(entries.size());
 
+                    uint32_t c_ref = SQUE_ECS_GetComponentRef(entry.ref, SQUE_ECS_TRANSFORM);
+                    if (c_ref == SQUE_ECS_UNKNOWN) transform = SQUE_ECS_AddTransform();
+                    else transform = SQUE_ECS_AddTransform(c_ref);
+
+                    c_ref = SQUE_ECS_GetComponentRef(entry.ref, SQUE_ECS_DRAWABLE);
+                    if (c_ref == SQUE_ECS_UNKNOWN) drawable = SQUE_ECS_AddDrawable();
+                    else drawable = SQUE_ECS_AddDrawable(c_ref);
                 }
 
                 // Add Components to ECS
                 SQUE_ECS_AddComponent(entry.ref, transform);
+                SQUE_ECS_AddComponent(entry.ref, drawable);
 
                 // Push entry
                 entries.push_back(entry);
@@ -174,7 +183,7 @@ public:
     void UpdateEntry(SQUE_H_Entry& entry)
     {
         SQUE_Entity& entity = SQUE_ECS_GetEntityRef(entry.ref);
-        sque_vec<uint32_t> children = SQUE_ECS_GetChildren(entity.children_ref);
+        sque_vec<uint32_t>& children = SQUE_ECS_GetChildren(entity.children_ref);
         bool is_selected = CHK_FLAG(entry.state, SQES_SELECTED);
         
         ImGuiTreeNodeFlags tmp_flags = node_flags 
@@ -209,16 +218,6 @@ public:
         }
         if (open)
         {
-            if (!entry.child_added)
-            {
-                for (uint16_t i = 0; i < children.size(); ++i)
-                {
-                    SQUE_H_Entry child;
-                    child.ref = children[i];
-                    entries.push_back(child);
-                    entry.child_refs.push_back(entries.size() - 1);
-                }
-            }
             SET_FLAG(entry.state, SQES_OPENED);
             for (uint16_t i = 0; i < children.size(); ++i)
                 UpdateEntry(entries[entry.child_refs[i]]);

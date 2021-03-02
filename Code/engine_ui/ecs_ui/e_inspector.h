@@ -54,6 +54,10 @@ public:
 				update_func = InspectorTransform;
 				components_strs.push_back(std::string("Transform##") + std::to_string(i)); // prob bad, good enough for simplicity
 				break;
+			case SQUE_ECS_DRAWABLE:
+				update_func = InspectorDrawable;
+				components_strs.push_back("Drawable##"+ std::to_string(i));
+				break;
 			// Better a single switch and then iterate all inspectors
 			}
 			components_gui.push_back(update_func);

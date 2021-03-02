@@ -8,6 +8,18 @@ sque_vec<char[32]> tags;
 
 sque_vec<SQUE_Entity> cached_entity_search;
 
+void SQUE_ECS_EarlyDestruct()
+{
+	entities.~sque_vec();
+	base_entities.~sque_vec();
+	children_refs.~sque_vec();
+
+	for (int i = 0; i < components_refs.size(); ++i)
+		components_refs[i].~sque_vec();
+
+	components_refs.~sque_vec();
+}
+
 SQUE_Entity& SQUE_ECS_GetEntityID(const uint32_t id)
 {
 	for (uint16_t i = 0; i < cached_entity_search.size(); ++i)
@@ -63,6 +75,16 @@ uint32_t SQUE_ECS_NewChildEntity(const uint32_t par_id)
 	entity.par_id = par_id;
 
 	return ind;
+}
+
+uint32_t SQUE_ECS_GetComponentRef(const uint32_t entity_ref, const uint32_t component_type)
+{
+	uint32_t ret = SQUE_ECS_UNKNOWN;
+	sque_vec<SQUE_Component>& comps = components_refs[entities[entity_ref].comp_ref];
+	for (uint16_t i = 0; i < comps.size(); ++i)
+		if (comps[i].type == component_type)
+			return comps[i].ref;
+	return ret;
 }
 
 void SQUE_ECS_AddComponent(const uint32_t entity_ref, SQUE_Component component)

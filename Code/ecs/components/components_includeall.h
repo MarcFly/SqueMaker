@@ -2,5 +2,6 @@
 #define _ECS_COMPONENTS_INCLUDEALL_
 
 #include "transform.h"
+#include "drawable.h"
 
 #endif

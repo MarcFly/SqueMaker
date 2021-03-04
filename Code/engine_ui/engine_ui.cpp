@@ -155,10 +155,12 @@ void EngineUI_SetFonts()
 #include <engine_ui/ecs_ui/ecs_hierarchy.h>
 #include <engine_ui/menu_bar.h>
 #include <engine_ui/ecs_ui/e_inspector.h>
+#include <engine_ui/render_window/render_window.h>
 static ImGuiDockNodeFlags base_dockflags = ImGuiDockNodeFlags_NoWindowMenuButton;
 static SQUE_Inspector inspector;
 static SQUE_Hierarchy hier;
 static SQUE_MenuBar menu_bar;
+static SQUE_RenderWindow render_window;
 
 static sque_vec<SQUE_Messager*> messagers;
 
@@ -185,11 +187,13 @@ void EngineUI_Init()
     inspector.Init();
     hier.SetInspector(&inspector);
 
+    render_window.Init();
+    
     // MenuBar Default starts
     menu_bar.Init();
     menu_bar.RegisterMenuItem(&hier.active, hier.name);
     menu_bar.RegisterMenuItem(&inspector.active, inspector.name);
-
+    menu_bar.RegisterMenuItem(&render_window.active, render_window.name);
     //io.ConfigWindowsResizeFromEdges = true; // ImguiBackend Has Mouse Cursor
 
     for (uint16_t i = 0; i < messagers.size(); ++i)
@@ -205,8 +209,9 @@ void EngineUI_Init()
 void EngineUI_RegisterItem(SQUE_UI_Item* item)
 {
     items.push_back(item);
+    item->id.pos = items.size() - 1;
     if (item->active) active_items.push_back(item->id);
-    item->id.pos = items.size()-1;
+    
 }
 
 void EngineUI_RegisterMessager(SQUE_Messager* msgr)
@@ -246,7 +251,7 @@ void EngineUI_Update(float dt)
     ImGui::DockSpaceOverViewport(ImGui::GetMainViewport(), base_dockflags);
 
     for (uint16_t i = 0; i < active_items.size(); ++i)
-        items[i]->Update(dt);
+        items[active_items[i].pos]->Update(dt);
 
     bool check = false;
     ImGui::ShowDemoWindow(&check);

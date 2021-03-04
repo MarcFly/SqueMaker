@@ -1,0 +1,37 @@
+#include "./render.h"
+
+// I don't think this will work out because there will be much more types of objects...
+sque_vec<SQUE_Mesh> meshes;
+sque_vec<SQUE_Texture2D> textures2D;
+sque_vec<SQUE_Shader> shaders;
+sque_vec<SQUE_Program> programs; 
+sque_vec<SQUE_Framebuffer> framebuffers;
+
+sque_vec<RenderStep*> render_steps;
+
+sque_vec<sque_vec<RenderTag>> render_tags;
+
+void Render_Init()
+{
+    
+}
+
+void Render_Update(float dt)
+{
+
+}
+
+void Render_CleanUp()
+{
+
+}
+
+sque_vec<RenderStep*>& Render_GetSteps()
+{
+    return render_steps;
+}
+
+RenderStep* Render_GetStep(uint32_t render_step_ref)
+{
+    return render_steps[render_step_ref];
+}

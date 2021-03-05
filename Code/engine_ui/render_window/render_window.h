@@ -13,7 +13,7 @@ private:
     glm::fquat rotation;
     SQUE_Camera camera;
     uint32_t render_step_ref;
-
+    uint32_t output_value_ref;
     // For usage
 
     // RenderStep Combo

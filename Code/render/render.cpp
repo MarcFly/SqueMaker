@@ -13,7 +13,11 @@ sque_vec<sque_vec<RenderTag>> render_tags;
 
 void Render_Init()
 {
+    RenderStep* ds = new RenderStep(); // default step
+    memcpy(ds->name, "Default Render Step", sizeof("Default Render Step"));
+    ds->state.BackUp();
     
+   render_steps.push_back(ds);
 }
 
 void Render_Update(float dt)
@@ -23,7 +27,9 @@ void Render_Update(float dt)
 
 void Render_CleanUp()
 {
-
+    for (uint16_t i = 0; i < render_steps.size(); ++i)
+        delete render_steps[i];
+    render_steps.clear();
 }
 
 sque_vec<RenderStep*>& Render_GetSteps()

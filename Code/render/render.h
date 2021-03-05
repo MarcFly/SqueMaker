@@ -47,7 +47,7 @@ enum OutTypes
     //...
 };
 
-typedef struct OutValue
+typedef struct RenderValue
 {
     char name[32];
     uint32_t type;
@@ -62,7 +62,8 @@ typedef struct RenderStep
     // Tagged input and outputs
     
     sque_vec<uint32_t> input_tags;
-    sque_vec<OutValue> output_data;
+    sque_vec<RenderValue> input_data;
+    sque_vec<RenderValue> output_data;
 
     SQUE_RenderState state;
 

@@ -1,4 +1,5 @@
 #include <squelib.h>
+#include <render/render.h>
 #include <engine_ui/engine_ui.h>
 #include <ecs/ecs.h>
 int main(int argc, char** argv)
@@ -7,6 +8,7 @@ int main(int argc, char** argv)
     SQUE_LIB_Init("Sque Maker");
 
     // Init Modules
+    Render_Init();
     EngineUI_Init();
     SQUE_CHECK_RENDER_ERRORS();
 
@@ -18,6 +20,7 @@ int main(int argc, char** argv)
         SQUE_INPUT_Process(0);
         SQUE_RENDER_Clear(ColorRGBA(.2, .2, .2, 1.));
         // Engine Specific Loop
+        Render_Update(dt);
         EngineUI_Update(dt);
         
         // Game Loop
@@ -31,6 +34,7 @@ int main(int argc, char** argv)
     SQUE_ECS_EarlyDestruct();
     
     // CleanUp Modules
+    Render_CleanUp();
     EngineUI_CleanUp();
 
     // Libraries CleanUp

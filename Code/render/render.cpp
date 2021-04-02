@@ -2,7 +2,7 @@
 
 // I don't think this will work out because there will be much more types of objects...
 sque_vec<SQUE_Mesh> meshes;
-sque_vec<SQUE_Texture2D> textures2D;
+sque_vec<SQUE_Texture> textures;
 sque_vec<SQUE_Shader> shaders;
 sque_vec<SQUE_Program> programs; 
 sque_vec<SQUE_Framebuffer> framebuffers;

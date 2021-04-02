@@ -54,7 +54,7 @@ typedef struct RenderValue
     uint64_t data_size;
     void* data;
     uint32_t specific_data_type;
-} OutValue;
+} RenderValue;
 
 typedef struct RenderStep
 {

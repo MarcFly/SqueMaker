@@ -3,6 +3,8 @@
 
 sque_vec<SQUE_UI_Item*> items;
 sque_vec<SQUE_UI_Id> active_items;
+sque_vec<SQUE_Executer*> redo_list;
+sque_vec<SQUE_Executer*> undo_list;
 
 #include <imgui.h>
 #include <imgui_impl_squelib.h>

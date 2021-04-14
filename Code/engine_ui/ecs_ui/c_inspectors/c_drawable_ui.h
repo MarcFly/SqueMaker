@@ -2,6 +2,8 @@
 #define _ECS_DRAWABLE_UI_
 
 #include "../../../ecs/components/drawable.h"
+#include "../../IconsForkAwesome.h"
+
 extern sque_vec<SQUE_Drawable> drawables;
 
 // only draw_mode should be modifiable

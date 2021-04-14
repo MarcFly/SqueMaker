@@ -2,8 +2,17 @@
 #define _SQUE_MAKER_GUI_
 
 #include <imgui.h>
+#include <imgui_internal.h>
 #include <squelib.h>
 #include "../messages/messages.h"
+
+class SQUE_Executer
+{
+public:
+    virtual void execute() {};
+    virtual void redo() {};
+    virtual void undo() {};
+};
 
 struct SQUE_UI_Id
 {

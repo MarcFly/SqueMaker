@@ -77,6 +77,11 @@ uint32_t SQUE_ECS_NewChildEntity(const uint32_t par_id)
 	return ind;
 }
 
+void SQUE_ECS_DeleteEntity(const uint32_t par_id)
+{
+
+}
+
 uint32_t SQUE_ECS_GetComponentRef(const uint32_t entity_ref, const uint32_t component_type)
 {
 	uint32_t ret = SQUE_ECS_UNKNOWN;

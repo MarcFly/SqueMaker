@@ -49,6 +49,8 @@ sque_vec<uint32_t>& SQUE_ECS_GetChildren(const uint32_t children_ref);
 uint32_t SQUE_ECS_NewEntity();
 uint32_t SQUE_ECS_NewChildEntity(const uint32_t par_id = -1);
 
+void SQUE_ECS_DeleteEntity(const uint32_t ref);
+
 uint32_t SQUE_ECS_GetComponentRef(const uint32_t entity_ref, const uint32_t component_type);
 void SQUE_ECS_AddComponent(const uint32_t entity_ref, SQUE_Component comp);
 

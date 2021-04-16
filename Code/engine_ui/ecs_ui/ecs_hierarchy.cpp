@@ -140,37 +140,28 @@ void SQUE_Hierarchy::UpdateRMMenu()
         {
             SQUE_H_Entry entry;
             entry.state = NULL;
-                
-            // Declare Base Components non-empty
-            SQUE_Component transform;
-            SQUE_Component drawable;
 
+            
             // Parenting?
             if (selected.size() != 1)
             {
                 entry.ref = SQUE_ECS_NewEntity();
+                SQUE_Entity e = SQUE_ECS_GetEntityRef(entry.ref);
+                entry.id = e.id;
                 base_entries.push_back(entry);
-
-                transform = SQUE_ECS_AddTransform();
-                drawable = SQUE_ECS_AddDrawable();
+                SQUE_ECS_AddComponent<SQUE_Transform>(e);
+                SQUE_ECS_AddComponent<SQUE_Drawable>(e);
             }
             else
             {
-                entry.ref = SQUE_ECS_NewChildEntity(SQUE_ECS_GetEntityRef(selected[0]->ref).id);
+                SQUE_Entity& parent = SQUE_ECS_GetEntityRef(selected[0]->ref);
+                entry.ref = SQUE_ECS_NewChildEntity(parent.id);
                 selected[0]->child_refs.push_back(entries.size());
 
-                uint32_t c_ref = SQUE_ECS_GetComponentRef(entry.ref, SQUE_ECS_TRANSFORM);
-                if (c_ref == SQUE_ECS_UNKNOWN) transform = SQUE_ECS_AddTransform();
-                else transform = SQUE_ECS_AddTransform(c_ref);
-
-                c_ref = SQUE_ECS_GetComponentRef(entry.ref, SQUE_ECS_DRAWABLE);
-                if (c_ref == SQUE_ECS_UNKNOWN) drawable = SQUE_ECS_AddDrawable();
-                else drawable = SQUE_ECS_AddDrawable(c_ref);
+                SQUE_Entity e = SQUE_ECS_GetEntityRef(entry.ref);
+                SQUE_ECS_AddComponent<SQUE_Transform>(e);
+                SQUE_ECS_AddComponent<SQUE_Drawable>(e);
             }
-
-            // Add Components to ECS
-            SQUE_ECS_AddComponent(entry.ref, transform);
-            SQUE_ECS_AddComponent(entry.ref, drawable);
 
             // Push entry
             entries.push_back(entry);

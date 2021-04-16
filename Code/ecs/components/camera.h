@@ -4,17 +4,33 @@
 #include <squelib.h>
 #include "../ecs.h"
 
-typedef struct SQUE_Camera
+class SQUE_Camera
 {
+public:
+// Required for all components
+    static SQUE_Component Create();
+    static SQUE_Component Create(const SQUE_Camera& copy);
+    static SQUE_Camera& GetByRef(uint32_t ref);
+    static SQUE_Camera& GetByID(uint32_t id);
+    static const uint32_t type = SQUE_ECS_CAMERA;
+    uint32_t id = UINT32_MAX;
+
+// Component Specific
+    SQUE_Camera();
+    ~SQUE_Camera();
+
     float near_plane;
     float far_plane;
-
     uint32_t resolution_x;
     uint32_t resolution_y;
-} SQUE_Camera;
 
-SQUE_Component SQUE_ECS_AddCamera();
-
-
+    SQUE_Camera& operator=(const SQUE_Camera& copy)
+    {
+        near_plane = copy.near_plane;
+        far_plane = copy.far_plane;
+        resolution_x = copy.resolution_x;
+        resolution_y = copy.resolution_y;
+    }
+};
 
 #endif

@@ -1,23 +1,43 @@
 #include "transform.h"
 sque_vec<SQUE_Transform> transforms;
+SQUE_Transform invalid;
 
-SQUE_Component SQUE_ECS_AddTransform()
+SQUE_Component SQUE_Transform::Create()
 {
     SQUE_Component ret;
-    SQUE_Transform new_transform;
-    ret.ref = transforms.try_insert(new_transform);
-    ret.type = SQUE_ECS_TRANSFORM;
-
+    ret.ref = transforms.try_insert(SQUE_Transform());
+    ret.type = type;
+    ret.id = transforms[ret.ref].id;
     return ret;
 }
 
-SQUE_Component SQUE_ECS_AddTransform(uint32_t par_ref)
+SQUE_Component SQUE_Transform::Create(const SQUE_Transform& copy)
 {
     SQUE_Component ret;
-    SQUE_Transform new_transform;
-    new_transform = transforms[par_ref];
-    ret.ref = transforms.try_insert(new_transform);
-    ret.type = SQUE_ECS_TRANSFORM;
-
+    ret.ref = transforms.try_insert(SQUE_Transform(copy));
+    ret.type = type;
+    ret.id = transforms[ret.ref].id;
     return ret;
+}
+
+SQUE_Transform& SQUE_Transform::GetByRef(uint32_t ref)
+{
+    return transforms[ref];
+}
+
+SQUE_Transform& SQUE_Transform::GetByID(uint32_t id)
+{
+    for (uint32_t i = 0; i < transforms.size(); ++i)
+        if (transforms[i].id == id) return transforms[i];
+    return invalid;
+}
+
+SQUE_Transform::SQUE_Transform()
+{
+    id = SQUE_RNG();
+}
+
+SQUE_Transform::~SQUE_Transform()
+{
+
 }

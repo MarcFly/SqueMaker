@@ -1,23 +1,43 @@
 #include "drawable.h"
 sque_vec<SQUE_Drawable> drawables;
+SQUE_Drawable invalid;
 
-SQUE_Component SQUE_ECS_AddDrawable()
+SQUE_Component SQUE_Drawable::Create()
 {
     SQUE_Component ret;
-    SQUE_Drawable new_drawable;
-    ret.ref = drawables.try_insert(new_drawable);
-    ret.type = SQUE_ECS_DRAWABLE;
-
+    ret.ref = drawables.try_insert(SQUE_Drawable());
+    ret.type = type;
+    ret.id = drawables[ret.ref].id;
     return ret;
 }
 
-SQUE_Component SQUE_ECS_AddDrawable(uint32_t par_ref)
+SQUE_Component SQUE_Drawable::Create(const SQUE_Drawable& copy)
 {
     SQUE_Component ret;
-    SQUE_Drawable new_drawable;
-    new_drawable = drawables[par_ref];
-    ret.ref = drawables.try_insert(new_drawable);
-    ret.type = SQUE_ECS_DRAWABLE;
-
+    ret.ref = drawables.try_insert(SQUE_Drawable(copy));
+    ret.type = type;
+    ret.id = drawables[ret.ref].id;
     return ret;
+}
+
+SQUE_Drawable& SQUE_Drawable::GetByRef(uint32_t ref)
+{
+    return drawables[ref];
+}
+
+SQUE_Drawable& SQUE_Drawable::GetByID(uint32_t id)
+{
+    for (uint32_t i = 0; i < drawables.size(); ++i)
+        if (drawables[i].id == id) return drawables[i];
+    return invalid;
+}
+
+SQUE_Drawable::SQUE_Drawable()
+{
+    id = SQUE_RNG();
+}
+
+SQUE_Drawable::~SQUE_Drawable()
+{
+
 }

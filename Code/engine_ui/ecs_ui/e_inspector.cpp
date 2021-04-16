@@ -17,27 +17,24 @@ void SQUE_Inspector::Init()
 
 void SQUE_Inspector::SetComponentFuncs(uint32_t component_ref)
 {
-	components_gui.clear();
-	component_ids.clear();
-	components_strs.clear();
+	for (uint32_t i = 0; i < components.size(); ++i)
+		delete components[i];
+	components.clear();
+
 	sque_vec<SQUE_Component>& ref = components_refs[component_ref];
+	SQUE_Entity& e = SQUE_ECS_GetEntityID(entity_id);
+
 	for (uint16_t i = 0; i < ref.size(); ++i)
 	{
-		UIComponentUpdate update_func;
 		switch (ref[i].type)
 		{
 		case SQUE_ECS_TRANSFORM:
-			update_func = InspectorTransform;
-			components_strs.push_back(std::string("Transform##") + std::to_string(i)); // prob bad, good enough for simplicity
+			components.push_back(new InspectorTransform(e, ref[i].id));
 			break;
 		case SQUE_ECS_DRAWABLE:
-			update_func = InspectorDrawable;
-			components_strs.push_back("Drawable##" + std::to_string(i));
+			components.push_back(new InspectorDrawable(e, ref[i].id));
 			break;
-			// Better a single switch and then iterate all inspectors
 		}
-		components_gui.push_back(update_func);
-		component_ids.push_back(ref[i].ref);
 	}
 }
 
@@ -55,14 +52,9 @@ void SQUE_Inspector::Update(float dt)
 {
 	if (ImGui::Begin(name, &active))
 	{
-		uint16_t s = components_gui.size();
+		uint16_t s = components.size();
 		for (uint16_t i = 0; i < s; ++i)
-		{
-			if (ImGui::CollapsingHeader(components_strs[i].c_str()))
-			{
-				components_gui[i](component_ids[i]);
-			}
-		}
+			components[i]->Inspect();
 
 		ImGui::End();
 	}

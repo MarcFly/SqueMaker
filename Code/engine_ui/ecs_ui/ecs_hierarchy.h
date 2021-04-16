@@ -14,6 +14,7 @@ enum ENTRY_STATE
 struct SQUE_H_Entry
 {
     uint32_t state = NULL;
+    uint32_t id = UINT32_MAX;
     uint32_t ref = -1;
     sque_vec<uint32_t> child_refs;
 };

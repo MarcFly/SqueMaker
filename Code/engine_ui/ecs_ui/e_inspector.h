@@ -3,17 +3,27 @@
 
 #include "../engine_ui.h"
 #include "ecs_hierarchy.h"
+#include "ecs/ecs.h"
 
-typedef void(*UIComponentUpdate)(uint32_t);
+class ComponentInspector
+{
+public:
+	ComponentInspector() {};
+	ComponentInspector(const SQUE_Entity& e, const uint32_t comp_id) {};
+
+	virtual ~ComponentInspector() {};
+
+	virtual void Inspect() {};
+	virtual void ApplyChanges(const uint32_t par_id) {};
+	char inspector_name[64] = "\0";
+};
 
 class SQUE_Inspector : public SQUE_UI_Item
 {
 	uint32_t entity_id;
 	char entity_name[32];
 	uint32_t tag_refs[5];
-	sque_vec<uint32_t> component_ids;
-	sque_vec<UIComponentUpdate> components_gui;
-	sque_vec<std::string> components_strs;
+	sque_vec<ComponentInspector*> components;
 
 	bool inspecting;
 

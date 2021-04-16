@@ -22,8 +22,8 @@ void SQUE_ECS_EarlyDestruct()
 
 SQUE_Entity& SQUE_ECS_GetEntityID(const uint32_t id)
 {
-	for (uint16_t i = 0; i < cached_entity_search.size(); ++i)
-		if (id == cached_entity_search[i].id) return cached_entity_search[i];
+	//for (uint16_t i = 0; i < cached_entity_search.size(); ++i)
+		//if (id == cached_entity_search[i].id) return cached_entity_search[i];
 
 	for (uint16_t i = 0; i < entities.size(); ++i)
 		if (id == entities[i].id)
@@ -77,24 +77,42 @@ uint32_t SQUE_ECS_NewChildEntity(const uint32_t par_id)
 	return ind;
 }
 
-void SQUE_ECS_DeleteEntity(const uint32_t par_id)
+void SQUE_ECS_DeleteEntity(SQUE_Entity& entity)
 {
+	entity.id = UINT32_MAX;
+	entity.par_id = UINT32_MAX;
+	SQUE_ECS_UpdateBaseEntityList();
 
+
+
+
+
+	// Pop Entity from entity vector
+	SQUE_Swap((entities.end()-1), &entity);
+	entities.pop_back();
 }
 
-uint32_t SQUE_ECS_GetComponentRef(const uint32_t entity_ref, const uint32_t component_type)
+void SQUE_ECS_DeleteEntityRef(const uint32_t ref)
 {
-	uint32_t ret = SQUE_ECS_UNKNOWN;
-	sque_vec<SQUE_Component>& comps = components_refs[entities[entity_ref].comp_ref];
-	for (uint16_t i = 0; i < comps.size(); ++i)
-		if (comps[i].type == component_type)
-			return comps[i].ref;
-	return ret;
+	SQUE_ECS_DeleteEntity(SQUE_ECS_GetEntityRef(ref));
+	entities[ref].id = UINT32_MAX;
+	SQUE_Swap(&entities[entities.size() - 1], &entities[ref]);
+
+	entities.pop_back();
 }
 
-void SQUE_ECS_AddComponent(const uint32_t entity_ref, SQUE_Component component)
+void SQUE_ECS_DeleteEntityID(const uint32_t id)
 {
-	components_refs[entities[entity_ref].comp_ref].push_back(component);
+	SQUE_Entity& e = SQUE_ECS_GetEntityID(id);
+	e.id = UINT32_MAX;
+	SQUE_Swap(&entities[entities.size() - 1], &e);
+	entities.pop_back();
+}
+
+
+sque_vec<SQUE_Component>& GetComponentVec(const uint32_t comp_ref)
+{
+	return components_refs[comp_ref];
 }
 
 void SQUE_ECS_UpdateBaseEntityList()

@@ -46,7 +46,7 @@ void InspectorTransform::Inspect()
 
 void InspectorTransform::ApplyChanges(const uint32_t par_id)
 {
-	SQUE_Transform& c_ref = SQUE_ECS_GetComponentID<SQUE_Transform>(SQUE_ECS_GetEntityID(par_id), c.id);
+	SQUE_Transform& c_ref = SQUE_ECS_GetComponentID<SQUE_Transform>(SQUE_ECS_GetEntity(par_id), c.id);
 	c_ref = c;
 }
 

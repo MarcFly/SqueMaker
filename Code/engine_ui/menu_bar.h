@@ -5,41 +5,96 @@
 
 #include <squelib.h>
 
-struct SQUE_SubMenu
-{
-    const char* name;
-    sque_vec<uint32_t> items;
-    sque_vec<uint32_t> sub_menus;
-};
-
 struct SQUE_MenuItem
 {
     bool* active_state;
     const char* name;
     sque_vec<uint32_t> sub_items;
+    const char* shortcut;
+    VoidFun cb = [](){};
+    // Callback? Executer? Executer that is added by itself if needed?
+    // Should be a void fun callback probably.
 };
 
 
+//  
 
 class SQUE_MenuBar : public SQUE_UI_Item
 {
 public:
     SQUE_UI_Id id;
+    sque_vec<SQUE_MenuItem> bar_items;
     sque_vec<SQUE_MenuItem> items;
-    sque_vec<uint32_t> base_items;
-    sque_vec<SQUE_MenuItem> variable_ui;
+
+    sque_vec<SQUE_MenuItem> variable_ui; // If an external wants to register items?
+
+private:
+    uint32_t GetBarItem(const char* bar_item)
+    {
+        for (uint16_t i = 0; i < bar_items.size(); ++i)
+            if (strcmp(bar_items[i].name, bar_item) == 0)
+                return i;
+
+        return UINT32_MAX;
+    }
+
+public:
+
+    void RegisterBarItem(const char* name)
+    {
+        SQUE_MenuItem p;
+        p.name = name;
+        bar_items.push_back(p);
+    }
+
+    
+
+    uint32_t RegisterMenuItem(const char* name, const char* bar_item = "Unsorted Commands", bool* item_active = NULL, const char* shortcut = "", VoidFun callback = []() {}, const char* sub_item = "")
+    {
+        uint32_t bar = GetBarItem(bar_item);
+        SQUE_MenuItem mi;
+        mi.active_state = item_active;
+        mi.name = name;
+        mi.shortcut = shortcut;
+        mi.cb = callback;
+        items.push_back(mi);
+        uint32_t ret = items.size() - 1;
+        bar_items[bar].sub_items.push_back(items.size() - 1);
+
+        // Dealing with Sub item in another way (ids...)
+        // items[sub_item].sub_items.push_back(ret);
+
+        return ret; // TODO: should return id rather than ref...
+    };
 
     void Init() final
     {
+        static bool b = false;
+        RegisterBarItem("File");
+        RegisterBarItem("Edit");
+        RegisterMenuItem("Unsorted Commands", "File");
+        RegisterMenuItem("Undo", "Edit", NULL, "", 
+            []() {
+                EngineUI_UndoLastAction();
+            });
+        RegisterMenuItem("Redo", "Edit", NULL, "", 
+            []() {
+                EngineUI_RedoLastAction();
+            });
     }
 
     void UpdateMenuItem(SQUE_MenuItem& item)
     {
         if (item.sub_items.size() == 0)
         {
-            bool prev = *item.active_state;
-            ImGui::MenuItem(item.name, "", item.active_state);
-            EngineUI_RequireUpdate(!(*item.active_state != prev));
+            bool has_bool = !(item.active_state == NULL);
+            bool prev = (has_bool) ? *item.active_state : false;
+            if (ImGui::MenuItem(item.name, "", item.active_state))
+            {
+                item.cb();
+                if (has_bool)EngineUI_RequireUpdate(!(*item.active_state != prev));
+            }
+            
         }
         else if (ImGui::BeginMenu(item.name))
         {
@@ -55,43 +110,21 @@ public:
     {
         ImGui::BeginMainMenuBar();
 
-        // Should a main menu register and be a class/struct by itself or should it be standalone
-        if (ImGui::BeginMenu("Menu1"))
+        for (uint16_t i = 0; i < bar_items.size(); ++i)
         {
-            ImGui::EndMenu();
-        }
-
-        if (ImGui::BeginMenu("Menu2"))
-        {
-            ImGui::EndMenu();
-        }
-
-        if (ImGui::BeginMenu("UI WIndows"))
-        {
-            for (uint16_t i = 0; i < base_items.size(); ++i)
+            if (ImGui::BeginMenu(bar_items[i].name))
             {
-                UpdateMenuItem(items[base_items[i]]);
+                for (uint32_t j = 0; j < bar_items[i].sub_items.size(); ++j)
+                    UpdateMenuItem(items[bar_items[i].sub_items[j]]);
+                ImGui::EndMenu();
             }
-
-            ImGui::EndMenu();
         }
-
         ImGui::EndMainMenuBar();
     }
 
     void CleanUp() final {}
 
-    uint32_t RegisterMenuItem(bool* item_active, const char* name, uint32_t sub_item = -1)
-    {
-        SQUE_MenuItem mi;
-        mi.active_state = item_active;
-        mi.name = name;
-        items.push_back(mi);
-        uint32_t ret = items.size() - 1;
-        if (sub_item == -1) base_items.push_back(ret);
-        else items[sub_item].sub_items.push_back(ret);
-        return ret;
-    };
+    
 };
 
 #endif

@@ -21,18 +21,19 @@ void SQUE_Inspector::SetComponentFuncs(uint32_t component_ref)
 		delete components[i];
 	components.clear();
 
-	sque_vec<SQUE_Component>& ref = components_refs[component_ref];
-	SQUE_Entity& e = SQUE_ECS_GetEntityID(entity_id);
+	const sque_vec<SQUE_Component>& component_ref_vec = SQUE_ECS_GetComponentVec(component_ref);
+	SQUE_Entity& e = SQUE_ECS_GetEntity(entity_id);
 
-	for (uint16_t i = 0; i < ref.size(); ++i)
+	for (uint16_t i = 0; i < component_ref_vec.size(); ++i)
 	{
-		switch (ref[i].type)
+		const SQUE_Component& ref = component_ref_vec[i];
+		switch (ref.type)
 		{
 		case SQUE_ECS_TRANSFORM:
-			components.push_back(new InspectorTransform(e, ref[i].id));
+			components.push_back(new InspectorTransform(e, ref.id));
 			break;
 		case SQUE_ECS_DRAWABLE:
-			components.push_back(new InspectorDrawable(e, ref[i].id));
+			components.push_back(new InspectorDrawable(e, ref.id));
 			break;
 		}
 	}
@@ -40,12 +41,13 @@ void SQUE_Inspector::SetComponentFuncs(uint32_t component_ref)
 
 void SQUE_Inspector::SetInspectEntity(SQUE_H_Entry& entry)
 {
-	SQUE_Entity& entity = entities[entry.ref];
+	const SQUE_Entity& entity = SQUE_ECS_GetEntity(entry.id);
+	SQ_ASSERT(entity.id != UINT32_MAX);
 	memcpy(entity_name, entity.name, 32);
 	memcpy(tag_refs, entity.tag_refs, sizeof(uint32_t) * 5);
 	entity_id = entity.id;
 
-	SetComponentFuncs(entities[entry.ref].comp_ref);
+	SetComponentFuncs(SQUE_ECS_GetEntity(entry.id).comp_ref);
 }
 
 void SQUE_Inspector::Update(float dt)

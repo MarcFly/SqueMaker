@@ -15,8 +15,8 @@ struct SQUE_H_Entry
 {
     uint32_t state = NULL;
     uint32_t id = UINT32_MAX;
-    uint32_t ref = -1;
-    sque_vec<uint32_t> child_refs;
+    uint32_t par_id = UINT32_MAX;
+    sque_vec<uint32_t> child_ids;
 };
 
 class SQUE_Hier_Messager : public SQUE_Messager
@@ -64,6 +64,8 @@ public:
     // Delete...
     //.... lots of other functionality as it comes up
 };
+
+SQUE_H_Entry& SQUE_H_GetEntry(const uint32_t id);
 
 
 #endif

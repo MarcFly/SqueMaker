@@ -3,8 +3,6 @@
 
 sque_vec<SQUE_UI_Item*> items;
 sque_vec<SQUE_UI_Id> active_items;
-sque_vec<SQUE_Executer*> redo_list;
-sque_vec<SQUE_Executer*> undo_list;
 
 #include <imgui.h>
 #include <imgui_impl_squelib.h>
@@ -193,9 +191,10 @@ void EngineUI_Init()
     
     // MenuBar Default starts
     menu_bar.Init();
-    menu_bar.RegisterMenuItem(&hier.active, hier.name);
-    menu_bar.RegisterMenuItem(&inspector.active, inspector.name);
-    menu_bar.RegisterMenuItem(&render_window.active, render_window.name);
+    menu_bar.RegisterBarItem("View");
+    menu_bar.RegisterMenuItem(hier.name, "View", &hier.active);
+    menu_bar.RegisterMenuItem(inspector.name, "View", &inspector.active);
+    menu_bar.RegisterMenuItem(render_window.name, "View", &render_window.active);
     //io.ConfigWindowsResizeFromEdges = true; // ImguiBackend Has Mouse Cursor
 
     for (uint16_t i = 0; i < messagers.size(); ++i)
@@ -267,4 +266,47 @@ void EngineUI_Update(float dt)
 void EngineUI_CleanUp()
 {
 
+    EngineUI_CleanActions();
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// ENGINE_UI UNDO/REDO ACTIONS ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+// Obviously none of this is thread safe...
+sque_vec<SQUE_Executer*> redo_list;
+sque_vec<SQUE_Executer*> undo_list;
+
+void EngineUI_ExecuteAction(SQUE_Executer* action)
+{
+    action->Execute();
+    undo_list.push_back(action);
+}
+
+void EngineUI_RedoLastAction()
+{
+    if (redo_list.size() == 0) return;
+    SQUE_Executer* a = redo_list[redo_list.size() - 1];
+    a->Redo();
+    undo_list.push_back(a);
+    redo_list.pop_back();
+}
+void EngineUI_UndoLastAction()
+{
+    if (undo_list.size() == 0) return;
+    SQUE_Executer* a = undo_list[undo_list.size() - 1];
+    a->Undo();
+    redo_list.push_back(a);
+    undo_list.pop_back();
+}
+
+void EngineUI_CleanActions()
+{
+    for (uint32_t i = 0; i < redo_list.size(); ++i)
+        delete redo_list[i];
+    for (uint32_t i = 0; i < undo_list.size(); ++i)
+        delete undo_list[i];
+
+    redo_list.clear();
+    undo_list.clear();
 }

@@ -9,9 +9,10 @@
 class SQUE_Executer
 {
 public:
-    virtual void execute() {};
-    virtual void redo() {};
-    virtual void undo() {};
+    const char* name = "Default Action Name";
+    virtual void Execute() {};
+    virtual void Redo() {};
+    virtual void Undo() {};
 };
 
 struct SQUE_UI_Id
@@ -64,6 +65,12 @@ void EngineUI_RegisterMessager(SQUE_Messager* msgr);
 
 void EngineUI_RequireUpdate(bool window_state);
 void EngineUI_Update(float dt);
+
+void EngineUI_ExecuteAction(SQUE_Executer* action);
+void EngineUI_RedoLastAction();
+void EngineUI_UndoLastAction();
+
+void EngineUI_CleanActions();
 
 void EngineUI_CleanUp();
 

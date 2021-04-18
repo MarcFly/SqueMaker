@@ -10,8 +10,8 @@ public:
 // Required for all components
     static SQUE_Component Create();
     static SQUE_Component Create(const SQUE_Camera& copy);
-    static SQUE_Camera& GetByRef(uint32_t ref);
-    static SQUE_Camera& GetByID(uint32_t id);
+    static SQUE_Component Create(const SQUE_Component_Template* copy) { return SQUE_Component(); }; // TODO
+    static SQUE_Camera& Get(uint32_t id);
     static const uint32_t type = SQUE_ECS_CAMERA;
     uint32_t id = UINT32_MAX;
 
@@ -30,6 +30,8 @@ public:
         far_plane = copy.far_plane;
         resolution_x = copy.resolution_x;
         resolution_y = copy.resolution_y;
+
+        return *this;
     }
 };
 

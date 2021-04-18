@@ -5,16 +5,16 @@
 #include <glm/detail/type_quat.hpp>
 #include "../ecs.h"
 
-class SQUE_Transform
+class SQUE_Transform : public SQUE_Component_Template
 {
 public:
+    static SQUE_Component Create(const SQUE_Component_Template* copy);
 // Required for all components
     static SQUE_Component Create();
     static SQUE_Component Create(const SQUE_Transform& copy);
-    static SQUE_Transform& GetByRef(uint32_t ref);
-    static SQUE_Transform& GetByID(uint32_t id);
+    static SQUE_Transform& Get(uint32_t id);
     static const uint32_t type = SQUE_ECS_TRANSFORM;
-    uint32_t id = UINT32_MAX;
+    //uint32_t id = UINT32_MAX;
 
 // Component Specific
     SQUE_Transform();

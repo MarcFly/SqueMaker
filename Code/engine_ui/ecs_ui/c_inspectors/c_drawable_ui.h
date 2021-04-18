@@ -48,7 +48,7 @@ void InspectorDrawable::Inspect()
 
 void InspectorDrawable::ApplyChanges(const uint32_t par_id)
 {
-	SQUE_Drawable& c_ref = SQUE_ECS_GetComponentID<SQUE_Drawable>(SQUE_ECS_GetEntityID(par_id), c.id);
+	SQUE_Drawable& c_ref = SQUE_ECS_GetComponentID<SQUE_Drawable>(SQUE_ECS_GetEntity(par_id), c.id);
 	c_ref = c;
 }
 #endif

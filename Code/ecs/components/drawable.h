@@ -11,8 +11,8 @@ public:
 // Required for all components
     static SQUE_Component Create();
     static SQUE_Component Create(const SQUE_Drawable& copy);
-    static SQUE_Drawable& GetByRef(uint32_t ref);
-    static SQUE_Drawable& GetByID(uint32_t id);
+    static SQUE_Component Create(const SQUE_Component_Template* copy) { return SQUE_Component(); }; // TODO
+    static SQUE_Drawable& Get(uint32_t id);
     static const uint32_t type = SQUE_ECS_DRAWABLE;
     uint32_t id = UINT32_MAX;
 

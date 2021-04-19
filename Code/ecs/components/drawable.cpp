@@ -1,6 +1,6 @@
 #include "drawable.h"
 sque_vec<SQUE_Drawable> drawables;
-SQUE_Drawable invalid;
+static SQUE_Drawable invalid_drawable;
 
 SQUE_Component SQUE_Drawable::Create()
 {
@@ -36,7 +36,7 @@ SQUE_Drawable& SQUE_Drawable::Get(uint32_t id)
 {
     for (uint32_t i = 0; i < drawables.size(); ++i)
         if (drawables[i].id == id) return drawables[i];
-    return invalid;
+    return invalid_drawable;
 }
 
 SQUE_Component* SQUE_Drawable::AllocateCopy(const uint32_t id)

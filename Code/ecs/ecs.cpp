@@ -1,11 +1,11 @@
 #include <ecs/ecs.h>
 
 sque_vec<SQUE_Entity> entities;
-SQUE_Entity invalid;
+static SQUE_Entity invalid_entity;
 sque_vec<SQUE_Entity> base_entities;
 sque_vec<sque_vec<uint32_t>> children_refs;
 sque_vec<sque_vec<SQUE_Component>> components_refs;
-sque_vec<char[32]> tags;
+sque_vec<char*> tags;
 
 sque_vec<SQUE_Entity> cached_entity_search;
 
@@ -32,7 +32,7 @@ SQUE_Entity& SQUE_ECS_GetEntity(const uint32_t id)
 				cached_entity_search.push_back(entities[i]);
 				return entities[i];
 			}
-	return invalid;
+	return invalid_entity;
 }
 
 uint32_t SQUE_ECS_GetNumChildren(const uint32_t child_ref)
@@ -138,12 +138,15 @@ void SQUE_ECS_DeclareComponent(const uint32_t component_ref, SQUE_Component& com
 #include "components/components_includeall.h"
 void SQUE_ECS_Component_AddType(const SQUE_Entity& entity, const uint32_t type)
 {
-	SQUE_ECS_DeclareComponent(entity.comp_ref, CreateFunTable[type]());
+	SQUE_Component temp = CreateFunTable[type]();
+	SQUE_ECS_DeclareComponent(entity.comp_ref, temp);
+	//SQUE_ECS_DeclareComponent(entity.comp_ref, const CreateFunTable[type]());
 }
 
 void SQUE_ECS_Component_CopyFromGeneric(const SQUE_Entity& entity, const uint32_t type, const SQUE_Component* copy)
 {
-	SQUE_ECS_DeclareComponent(entity.comp_ref, TemplateCreateFunTable[type](copy));
+	SQUE_Component temp = TemplateCreateFunTable[type](copy);
+	SQUE_ECS_DeclareComponent(entity.comp_ref, temp);
 }
 
 SQUE_Component* SQUE_ECS_Component_GetGenericP(const SQUE_Entity& entity, const uint32_t type)

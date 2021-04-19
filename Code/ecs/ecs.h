@@ -84,14 +84,18 @@ SQUE_Component* SQUE_ECS_Component_AllocateCopy(const SQUE_Entity& entity, const
 template<class T>
 void SQUE_ECS_AddComponent(const SQUE_Entity& entity)
 {
-	SQUE_ECS_DeclareComponent(entity.comp_ref, T::Create());
+	SQUE_Component cpy = T::Create();
+	SQUE_ECS_DeclareComponent(entity.comp_ref, cpy);// T::Create());
 }
 
 template<class T>
 void SQUE_ECS_CopyComponentTo(const SQUE_Entity& entity, const T& component)
 {
-	SQUE_ECS_DeclareComponent(entity.comp_ref, T::Create(component));
+	SQUE_Component cpy = T::Create(component);
+	SQUE_ECS_DeclareComponent(entity.comp_ref, cpy);//T::Create(component));
 }
+
+static SQUE_Component invalid_comp;
 
 template<class T>
 T& SQUE_ECS_GetComponent(const SQUE_Entity& entity)
@@ -101,7 +105,7 @@ T& SQUE_ECS_GetComponent(const SQUE_Entity& entity)
 		if (comps[i].type == T::static_type)
 			return T::Get(comps[i].id);
 
-	return T(); // This is not good, returns invalid data
+	return *(T*)(&invalid_comp); // This is not good, returns invalid data
 }
 
 template<class T>
@@ -112,7 +116,7 @@ T& SQUE_ECS_GetComponentID(const SQUE_Entity& entity, const uint32_t comp_id)
 		if (comps[i].type == T::static_type && comps[i].id == comp_id)
 			return T::Get(comps[i].id);
 
-	return T(); // This is not good, returns invalid data
+	return *(T*)(&invalid_comp); // This is not good, returns invalid data
 }
 
 #endif

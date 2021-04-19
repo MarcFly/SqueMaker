@@ -7,7 +7,7 @@ sque_vec<SQUE_Shader> shaders;
 sque_vec<SQUE_Program> programs; 
 sque_vec<SQUE_Framebuffer> framebuffers;
 
-sque_vec<RenderStep*> render_steps;
+sque_vec<RenderStep*> render_steps; //  TODO: Cleanup RenderSteps... Valgrind 126/235
 
 sque_vec<sque_vec<RenderTag>> render_tags;
 

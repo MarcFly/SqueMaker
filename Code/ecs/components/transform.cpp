@@ -1,6 +1,6 @@
 #include "transform.h"
 sque_vec<SQUE_Transform> transforms;
-SQUE_Transform invalid;
+static SQUE_Transform invalid_transform;
 
 SQUE_Component SQUE_Transform::Create()
 {
@@ -36,7 +36,7 @@ SQUE_Transform& SQUE_Transform::Get(uint32_t id)
 {
     for (uint32_t i = 0; i < transforms.size(); ++i)
         if (transforms[i].id == id) return transforms[i];
-    return invalid;
+    return invalid_transform;
 }
 
 SQUE_Component* SQUE_Transform::GetGenericP(const uint32_t id)

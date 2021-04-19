@@ -43,7 +43,7 @@ set(CMAKE_BINARY_DIR ${CMAKE_CURRENT_SOURCE_DIR}/builds)
 # Get all code
 file(GLOB_RECURSE SqueMaker_src  ${CMAKE_CURRENT_SOURCE_DIR}/Code/*.cpp)
 file(GLOB_RECURSE SqueMaker_head ${CMAKE_CURRENT_SOURCE_DIR}/Code/*.h)
-SqueLib_PrepareBuild(SqueMaker MarcTorresJimenez "${SqueMaker_src} ${SqueMaker_inc}")
+SqueLib_PrepareBuild(SqueMaker MarcTorresJimenez "${SqueMaker_src};${SqueMaker_inc}")
 SqueLib_Package(${CMAKE_CURRENT_SOURCE_DIR}/Assets "")
 
 #------------------------------------------------------------------------------------------------

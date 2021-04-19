@@ -5,7 +5,7 @@
 #include "../../ecs/components/components_includeall.h"
 
 sque_vec<SQUE_H_Entry> entries;
-SQUE_H_Entry invalid;
+static SQUE_H_Entry invalid_entry;
 
 static ImGuiTreeNodeFlags node_flags = ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_OpenOnDoubleClick | ImGuiTreeNodeFlags_SpanFullWidth;
 
@@ -75,7 +75,7 @@ SQUE_H_Entry& SQUE_H_GetEntry(const uint32_t id)
         if (entries[i].id == id)
             return entries[i];
 
-    return SQUE_H_Entry();// This is not good, returns invalid data
+    return invalid_entry;// This is not good, returns invalid data
 }
 
 void SQUE_H_CreateEntry(const uint32_t id, const uint32_t par_id = UINT32_MAX)
@@ -341,7 +341,8 @@ void SQUE_Hierarchy::UpdateRMMenu()
 
                 EngineUI_ExecuteAction(del_entity);
 
-                inspector->SetInspectEntity(SQUE_H_Entry());
+                SQUE_H_Entry cpy = SQUE_H_Entry();
+                inspector->SetInspectEntity(cpy);
             }
         }
         ImGui::MenuItem("Copy Selected");

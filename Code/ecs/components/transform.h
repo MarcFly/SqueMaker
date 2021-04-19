@@ -5,16 +5,17 @@
 #include <glm/detail/type_quat.hpp>
 #include "../ecs.h"
 
-class SQUE_Transform : public SQUE_Component_Template
+class SQUE_Transform : public SQUE_Component
 {
 public:
-    static SQUE_Component Create(const SQUE_Component_Template* copy);
+    static SQUE_Component Create(const SQUE_Component* copy);
 // Required for all components
     static SQUE_Component Create();
     static SQUE_Component Create(const SQUE_Transform& copy);
-    static SQUE_Transform& Get(uint32_t id);
-    static const uint32_t type = SQUE_ECS_TRANSFORM;
-    //uint32_t id = UINT32_MAX;
+    static SQUE_Transform& Get(const uint32_t id);
+    static SQUE_Component* GetGenericP(const uint32_t id);
+    static SQUE_Component* AllocateCopy(const uint32_t id);
+    static const uint32_t static_type = SQUE_ECS_TRANSFORM;
 
 // Component Specific
     SQUE_Transform();
@@ -31,6 +32,8 @@ public:
         scale = copy.scale;
         return *this;
     }
+
+    //SQUE_Component* GenerateCopy() { return new SQUE_Transform(*this); }
 };
 
 #endif

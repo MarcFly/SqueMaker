@@ -4,17 +4,18 @@
 #include <squelib.h>
 #include "../ecs.h"
 
-class SQUE_Drawable
+class SQUE_Drawable : public SQUE_Component
 {
 public:
 
 // Required for all components
     static SQUE_Component Create();
     static SQUE_Component Create(const SQUE_Drawable& copy);
-    static SQUE_Component Create(const SQUE_Component_Template* copy) { return SQUE_Component(); }; // TODO
+    static SQUE_Component Create(const SQUE_Component* copy);
     static SQUE_Drawable& Get(uint32_t id);
-    static const uint32_t type = SQUE_ECS_DRAWABLE;
-    uint32_t id = UINT32_MAX;
+    static SQUE_Component* GetT(const uint32_t id) { return NULL; }; // TODO
+    static SQUE_Component* AllocateCopy(const uint32_t id);
+    static const uint32_t static_type = SQUE_ECS_DRAWABLE;
 
 // Drawable Specific
     

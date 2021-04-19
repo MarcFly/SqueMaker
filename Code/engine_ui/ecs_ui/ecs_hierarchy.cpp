@@ -75,10 +75,10 @@ SQUE_H_Entry& SQUE_H_GetEntry(const uint32_t id)
         if (entries[i].id == id)
             return entries[i];
 
-    return SQUE_H_Entry();// invalid;
+    return SQUE_H_Entry();// This is not good, returns invalid data
 }
 
-void SQUE_H_CreateEntry(const uint32_t id, const uint32_t par_id)
+void SQUE_H_CreateEntry(const uint32_t id, const uint32_t par_id = UINT32_MAX)
 {
     SQUE_H_Entry& par_entry = SQUE_H_GetEntry(par_id);
     SQUE_H_Entry entry;
@@ -90,10 +90,36 @@ void SQUE_H_CreateEntry(const uint32_t id, const uint32_t par_id)
     entries.push_back(entry);
 }
 
+void SQUE_H_RebaseEntry(const uint32_t id, const uint32_t par_id = UINT32_MAX)
+{
+    SQUE_H_Entry& e = SQUE_H_GetEntry(id);
+    if(e.par_id != UINT32_MAX)
+    { 
+        SQUE_H_Entry& par_e = SQUE_H_GetEntry(e.par_id);
+        for (uint32_t i = 0; i < par_e.child_ids.size(); ++i)
+        {
+            if (par_e.child_ids[i] == id)
+            {
+                SQUE_Swap(par_e.child_ids.last(), &par_e.child_ids[i]);
+                par_e.child_ids.pop_back();
+                break;
+            }
+        }
+    }
+
+    e.par_id = par_id;
+    if (par_id != UINT32_MAX)
+    {
+        SQUE_H_Entry& par_e = SQUE_H_GetEntry(e.par_id);
+        par_e.child_ids.push_back(e.id);
+    }
+}
+
 void SQUE_H_DeleteEntry(const uint32_t id)
 {
     SQUE_H_Entry& e = SQUE_H_GetEntry(id);
-    
+    if (e.id == UINT32_MAX) return;
+
     SQUE_H_Entry& p_e = SQUE_H_GetEntry(e.par_id);
     if (p_e.id != UINT32_MAX)
     {
@@ -171,11 +197,109 @@ public:
 
 };
 
+
+
+// Full copy?
 class Exec_DeleteEntities : public SQUE_Executer
 {
-    //sque_vec<SQUE_Entity>
-public:
+    // Copy of the entities
+    sque_vec<uint32_t> selected_entities;
+    sque_vec<sque_vec<uint32_t>> child_entities;
+    sque_vec<SQUE_Entity> entities;
+    sque_vec<sque_vec<SQUE_Component*>> components;
 
+    bool FindEntity(const uint32_t id)
+    {
+        for (uint32_t i = 0; i < entities.size(); ++i)
+            if (entities[i].id == id)
+                return true;
+        return false;
+    }
+
+    void CopyComponents(const SQUE_Entity& e, sque_vec<SQUE_Component*>& comp_vec)
+    {
+        const sque_vec<SQUE_Component>& entity_comps = SQUE_ECS_GetComponentVec(e.comp_ref);
+        for (uint16_t i = 0; i < entity_comps.size(); ++i)
+            comp_vec.push_back(SQUE_ECS_Component_AllocateCopy(e, entity_comps[i].type, entity_comps[i].id));
+    }
+
+    void CopyChildren(const SQUE_Entity& e, sque_vec<uint32_t>& children_vec)
+    {
+        sque_vec<uint32_t> children_ids = SQUE_ECS_GetChildren(e.children_ref);
+        for (uint32_t i = 0; i < children_ids.size(); ++i)
+        {
+            const SQUE_Entity& child = SQUE_ECS_GetEntity(children_ids[i]);
+            children_vec.push_back(child.id);
+            if (FindEntity(child.id)) continue;
+
+            entities.push_back(child);
+            // Generate Copy of Components
+            components.push_back(sque_vec<SQUE_Component*>());
+            CopyComponents(child, *components.last());
+            // Generate Copy of Children
+            child_entities.push_back(sque_vec<uint32_t>());
+            CopyChildren(child, *child_entities.last());            
+        }
+    }
+
+public:
+    sque_vec<uint32_t> selected_ids;
+    void Execute()
+    {
+        for (uint32_t i = 0; i < selected_ids.size(); ++i)
+        {
+            const SQUE_Entity& e = SQUE_ECS_GetEntity(selected_ids[i]);
+            entities.push_back(e);
+            SQUE_Entity& last = *entities.last();
+
+            // Generate Copies for the components
+            components.push_back(sque_vec<SQUE_Component*>());
+            CopyComponents(e, *components.last());
+
+            // Generate Copies of their children
+            child_entities.push_back(sque_vec<uint32_t>());
+            CopyChildren(last, *child_entities.last());
+        }
+
+        for (uint32_t i = 0; i < selected_ids.size(); ++i)
+        {
+            SQUE_ECS_DeleteEntity(selected_ids[i]);
+            SQUE_H_DeleteEntry(selected_ids[i]);
+        }
+    }
+
+    void Undo()
+    {
+        for (uint32_t i = 0; i < entities.size(); ++i)
+        {
+            uint32_t id = SQUE_ECS_NewEntity();
+            SQUE_Entity& e = SQUE_ECS_GetEntity(id);
+            e.id = entities[i].id;
+            e.par_id = entities[i].par_id;
+            memcpy(e.name, entities[i].name, sizeof(entities[i].name));
+            memcpy(e.tag_refs, entities[i].tag_refs, sizeof(entities[i].tag_refs));
+            
+            for (uint16_t j = 0; j < components[i].size(); ++j)
+                SQUE_ECS_Component_CopyFromGeneric(e, components[i][j]->type, components[i][j]);
+
+            SQUE_H_CreateEntry(e.id);
+        }
+
+        for (uint32_t i = 0; i < entities.size(); ++i)
+        {
+            SQUE_ECS_RebaseChild(entities[i].id, entities[i].par_id);
+            SQUE_H_RebaseEntry(entities[i].id, entities[i].par_id);
+        }
+    }
+
+    void Redo()
+    {
+        for (uint32_t i = 0; i < selected_ids.size(); ++i)
+        {
+            SQUE_ECS_DeleteEntity(selected_ids[i]);
+            SQUE_H_DeleteEntry(selected_ids[i]);
+        }
+    }
 };
 
 void SQUE_Hierarchy::UpdateRMMenu()
@@ -204,13 +328,22 @@ void SQUE_Hierarchy::UpdateRMMenu()
             
             // These can be converted into executors in each inspector most probably
             SQUE_Entity& e = SQUE_ECS_GetEntity(entries.last()->id);
-            SQUE_ECS_AddComponentIllegal(e, SQUE_ECS_TRANSFORM);
-            SQUE_Transform test;
-            SQUE_ECS_CopyComponentIllegal(e, test.type, &test);
             SQUE_ECS_AddComponent<SQUE_Transform>(e);
             SQUE_ECS_AddComponent<SQUE_Drawable>(e);
         }
-        ImGui::MenuItem("Delete Selected");
+        if(ImGui::MenuItem("Delete Selected"))
+        {
+            if (selected.size() > 0)
+            {
+                Exec_DeleteEntities* del_entity = new Exec_DeleteEntities();
+                for (uint32_t i = 0; i < selected.size(); ++i)
+                    del_entity->selected_ids.push_back(selected[i]->id);
+
+                EngineUI_ExecuteAction(del_entity);
+
+                inspector->SetInspectEntity(SQUE_H_Entry());
+            }
+        }
         ImGui::MenuItem("Copy Selected");
         ImGui::MenuItem("Duplicate Selected");
         ImGui::EndPopup();

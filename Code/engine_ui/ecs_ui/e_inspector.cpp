@@ -24,6 +24,7 @@ void SQUE_Inspector::SetComponentFuncs(uint32_t component_ref)
 	const sque_vec<SQUE_Component>& component_ref_vec = SQUE_ECS_GetComponentVec(component_ref);
 	SQUE_Entity& e = SQUE_ECS_GetEntity(entity_id);
 
+	// Pass this to an XMacro...
 	for (uint16_t i = 0; i < component_ref_vec.size(); ++i)
 	{
 		const SQUE_Component& ref = component_ref_vec[i];
@@ -41,6 +42,13 @@ void SQUE_Inspector::SetComponentFuncs(uint32_t component_ref)
 
 void SQUE_Inspector::SetInspectEntity(SQUE_H_Entry& entry)
 {
+	if (entry.id == UINT32_MAX)
+	{
+		for (uint32_t i = 0; i < components.size(); ++i)
+			delete components[i];
+		components.clear();
+		return;
+	}
 	const SQUE_Entity& entity = SQUE_ECS_GetEntity(entry.id);
 	SQ_ASSERT(entity.id != UINT32_MAX);
 	memcpy(entity_name, entity.name, 32);

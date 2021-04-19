@@ -1,7 +1,8 @@
+#include <engine_ui/engine_ui.h>
 #include <squelib.h>
 #include <render/render.h>
-#include <engine_ui/engine_ui.h>
 #include <ecs/ecs.h>
+
 int main(int argc, char** argv)
 {
     // Libraries Init

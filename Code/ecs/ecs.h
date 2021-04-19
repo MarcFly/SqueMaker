@@ -33,19 +33,24 @@ enum ECS_COMPONENTS
 
 };
 
-struct SQUE_Component
-{
-	uint32_t type = SQUE_ECS_UNKNOWN;	
-	uint32_t id = UINT32_MAX;
-};
-
-class SQUE_Component_Template
+class SQUE_Component
 {
 public:
-	SQUE_Component_Template() {};
-	virtual ~SQUE_Component_Template() {};
+	SQUE_Component() {};
+	virtual ~SQUE_Component() {};
+
 	uint32_t id = UINT32_MAX;
 	uint32_t par_id = UINT32_MAX;
+	uint32_t type = SQUE_ECS_UNKNOWN;
+
+	// This is so bad...
+	SQUE_Component* PointerCopy() 
+	{ 
+		SQUE_Component* ret = (SQUE_Component*) (void*)(new char[sizeof(this)]);
+		*ret = *this;
+		return ret;
+	}
+	//virtual SQUE_Component* GenerateCopy() { return new SQUE_Component(*this); };
 };
 
 void SQUE_ECS_DeclareSubjects();
@@ -57,6 +62,7 @@ SQUE_Entity& SQUE_ECS_GetEntity(const uint32_t id);
 uint32_t SQUE_ECS_GetNumChildren(const uint32_t children_ref);
 sque_vec<uint32_t>& SQUE_ECS_GetChildren(const uint32_t children_ref);
 uint32_t SQUE_ECS_NewEntity(const uint32_t par_id = UINT32_MAX);
+void SQUE_ECS_RebaseChild(const uint32_t id, const uint32_t par_id);
 void SQUE_ECS_DeleteEntity(const uint32_t id);
 
 void SQUE_ECS_UpdateBaseEntityList();
@@ -69,8 +75,10 @@ void SQUE_ECS_EarlyDestruct();
 const sque_vec<SQUE_Component>& SQUE_ECS_GetComponentVec(const uint32_t comp_ref);
 void SQUE_ECS_DeclareComponent(const uint32_t component_ref, SQUE_Component& component);
 
-void SQUE_ECS_AddComponentIllegal(const SQUE_Entity& entity, const uint32_t type);
-void SQUE_ECS_CopyComponentIllegal(const SQUE_Entity& entity, const uint32_t type, const SQUE_Component_Template* copy);
+void SQUE_ECS_Component_AddType(const SQUE_Entity& entity, const uint32_t type);
+void SQUE_ECS_Component_CopyFromGeneric(const SQUE_Entity& entity, const uint32_t type, const SQUE_Component* copy);
+SQUE_Component* SQUE_ECS_Component_GetGenericP(const SQUE_Entity& entity, const uint32_t type);
+SQUE_Component* SQUE_ECS_Component_AllocateCopy(const SQUE_Entity& entity, const uint32_t type, const uint32_t id);
 
 // Template Definitions
 template<class T>
@@ -88,10 +96,12 @@ void SQUE_ECS_CopyComponentTo(const SQUE_Entity& entity, const T& component)
 template<class T>
 T& SQUE_ECS_GetComponent(const SQUE_Entity& entity)
 {
-	sque_vec<SQUE_Component>& comps = GetComponentVec(entity.comp_ref);
+	const sque_vec<SQUE_Component>& comps = SQUE_ECS_GetComponentVec(entity.comp_ref);
 	for (uint16_t i = 0; i < comps.size(); ++i)
-		if (comps[i].type == T::type)
+		if (comps[i].type == T::static_type)
 			return T::Get(comps[i].id);
+
+	return T(); // This is not good, returns invalid data
 }
 
 template<class T>
@@ -99,8 +109,10 @@ T& SQUE_ECS_GetComponentID(const SQUE_Entity& entity, const uint32_t comp_id)
 {
 	const sque_vec<SQUE_Component>& comps = SQUE_ECS_GetComponentVec(entity.comp_ref);
 	for (uint16_t i = 0; i < comps.size(); ++i)
-		if (comps[i].type == T::type && comps[i].id == comp_id)
+		if (comps[i].type == T::static_type && comps[i].id == comp_id)
 			return T::Get(comps[i].id);
+
+	return T(); // This is not good, returns invalid data
 }
 
 #endif

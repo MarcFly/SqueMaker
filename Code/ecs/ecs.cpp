@@ -63,6 +63,33 @@ uint32_t SQUE_ECS_NewEntity(const uint32_t par_id)
 	return entity.id;
 }
 
+void SQUE_ECS_RebaseChild(const uint32_t id, const uint32_t par_id)
+{
+	SQUE_Entity& e = SQUE_ECS_GetEntity(id);
+	if (e.par_id != UINT32_MAX)
+	{
+		SQUE_Entity& par_e = SQUE_ECS_GetEntity(e.par_id);
+		sque_vec<uint32_t>& par_children = SQUE_ECS_GetChildren(par_e.children_ref);
+		for (uint32_t i = 0; i < par_children.size(); ++i)
+		{
+			if (par_children[i] == e.id)
+			{
+				SQUE_Swap(par_children.last(), &par_children[i]);
+				par_children.pop_back();
+				break;
+			}
+		}
+	}
+
+	if (par_id != UINT32_MAX)
+	{
+		SQUE_Entity& par_e = SQUE_ECS_GetEntity(par_id);
+		sque_vec<uint32_t>& par_children = SQUE_ECS_GetChildren(par_e.children_ref);
+		par_children.push_back(id);
+	}
+	e.par_id = par_id;
+}
+
 void SQUE_ECS_DeleteEntity(const uint32_t id)
 {
 	SQUE_Entity& entity = SQUE_ECS_GetEntity(id);
@@ -109,14 +136,29 @@ void SQUE_ECS_DeclareComponent(const uint32_t component_ref, SQUE_Component& com
 
 
 #include "components/components_includeall.h"
-void SQUE_ECS_AddComponentIllegal(const SQUE_Entity& entity, const uint32_t type)
+void SQUE_ECS_Component_AddType(const SQUE_Entity& entity, const uint32_t type)
 {
 	SQUE_ECS_DeclareComponent(entity.comp_ref, CreateFunTable[type]());
 }
 
-void SQUE_ECS_CopyComponentIllegal(const SQUE_Entity& entity, const uint32_t type, const SQUE_Component_Template* copy)
+void SQUE_ECS_Component_CopyFromGeneric(const SQUE_Entity& entity, const uint32_t type, const SQUE_Component* copy)
 {
 	SQUE_ECS_DeclareComponent(entity.comp_ref, TemplateCreateFunTable[type](copy));
+}
+
+SQUE_Component* SQUE_ECS_Component_GetGenericP(const SQUE_Entity& entity, const uint32_t type)
+{
+	const sque_vec<SQUE_Component>& comps = SQUE_ECS_GetComponentVec(entity.comp_ref);
+	for (uint16_t i = 0; i < comps.size(); ++i)
+		if (comps[i].type == type)
+			return ComponentGetFunTable[type](comps[i].id);
+
+	return NULL;
+}
+
+SQUE_Component* SQUE_ECS_Component_AllocateCopy(const SQUE_Entity& entity, const uint32_t type, const uint32_t id)
+{
+	return ComponentAllocateCopyFunTable[type](id);
 }
 
 void SQUE_ECS_UpdateBaseEntityList()

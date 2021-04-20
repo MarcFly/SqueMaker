@@ -20,6 +20,13 @@ set(imgui_src
     ${imgui_include}/imgui_tables.cpp
     ${imgui_include}/imgui.cpp
     ${imgui_sque_include}/imgui_impl_squelib.cpp)
+
+# ImNodes - ImGui Node Editor
+set(imnodes_include ${CMAKE_CURRENT_SOURCE_DIR}/external/imnodes)
+set(imnodes_src
+    ${imnodes_include}/imnodes.cpp
+)
+
 #------------------------------------------------------------------------------------------------
 # SETUP CURRENT PROJECT
 #------------------------------------------------------------------------------------------------
@@ -67,12 +74,14 @@ target_include_directories(SqueMaker
         ${SqueLib_include}
         ${imgui_sque_include}
         ${imgui_include}
+        ${imnodes_include}
 )
 
 
 target_sources(SqueMaker PUBLIC
     "${imgui_src}"
     "${SqueMaker_head}"
+    "${imnodes_src}"
 )
 
 # Group Sources as Intended

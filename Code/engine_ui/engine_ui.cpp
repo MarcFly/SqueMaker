@@ -156,12 +156,15 @@ void EngineUI_SetFonts()
 #include <engine_ui/menu_bar.h>
 #include <engine_ui/ecs_ui/e_inspector.h>
 #include <engine_ui/render_window/render_window.h>
+#include <engine_ui/render_window/render_graph.h>
+
 static ImGuiDockNodeFlags base_dockflags = ImGuiDockNodeFlags_NoWindowMenuButton;
+// TODO: Convert to XMacro (enum of the types...)
 static SQUE_Inspector inspector;
 static SQUE_Hierarchy hier;
 static SQUE_MenuBar menu_bar;
 static SQUE_RenderWindow render_window;
-
+static SQUE_RenderGraph render_graph;
 static sque_vec<SQUE_Messager*> messagers;
 
 void EngineUI_Init()
@@ -174,6 +177,7 @@ void EngineUI_Init()
     EngineUI_SetFonts();
 
     ImGui_ImplSqueLib_Init();
+    ImNodes::CreateContext();
 
     EngineUI_DefaultStyle();
     EngineUI_DefaultTheme();
@@ -188,13 +192,15 @@ void EngineUI_Init()
     hier.SetInspector(&inspector);
 
     render_window.Init();
-    
+    render_graph.Init();
+
     // MenuBar Default starts
     menu_bar.Init();
     menu_bar.RegisterBarItem("View");
     menu_bar.RegisterMenuItem(hier.name, "View", &hier.active);
     menu_bar.RegisterMenuItem(inspector.name, "View", &inspector.active);
     menu_bar.RegisterMenuItem(render_window.name, "View", &render_window.active);
+    menu_bar.RegisterMenuItem(render_graph.name, "View", &render_graph.active);
     //io.ConfigWindowsResizeFromEdges = true; // ImguiBackend Has Mouse Cursor
 
     for (uint16_t i = 0; i < messagers.size(); ++i)
@@ -244,6 +250,8 @@ void EngineUI_RequireUpdate(bool window_state)
 
 void EngineUI_Update(float dt)
 {
+    //if(SQUE_DISPLAY_)
+
     ImGui_ImplSqueLib_NewFrame();
     ImGui::NewFrame();
     
@@ -265,7 +273,8 @@ void EngineUI_Update(float dt)
 
 void EngineUI_CleanUp()
 {
-
+    ImNodes::DestroyContext();
+    ImGui::DestroyContext();
     EngineUI_CleanActions();
 }
 

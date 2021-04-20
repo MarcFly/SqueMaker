@@ -3,6 +3,7 @@
 
 #include <imgui.h>
 #include <imgui_internal.h>
+#include "IconsForkAwesome.h"
 #include <squelib.h>
 #include "../messages/messages.h"
 
@@ -21,6 +22,16 @@ struct SQUE_UI_Id
     uint16_t pos;
 };
 
+class SQUE_RMPopupMenu
+{
+    bool rm_was_clicked;
+public:    
+    ImGuiHoveredFlags flags = ImGuiHoveredFlags_None;
+    const char* container_name;
+
+    void CheckToOpen();
+};
+
 class SQUE_UI_Item
 {
 public:
@@ -32,16 +43,6 @@ public:
     virtual void Init();
     virtual void Update(float dt) {};
     virtual void CleanUp() {};
-};
-
-class SQUE_RMPopupMenu
-{
-    bool rm_was_clicked;
-public:    
-    ImGuiHoveredFlags flags;
-    const char* container_name;
-
-    void CheckToOpen();
 };
 
 // OOP vs DoD on windows

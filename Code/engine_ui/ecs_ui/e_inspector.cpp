@@ -65,9 +65,8 @@ void SQUE_Inspector::Update(float dt)
 		uint16_t s = components.size();
 		for (uint16_t i = 0; i < s; ++i)
 			components[i]->Inspect();
-
-		ImGui::End();
 	}
+	ImGui::End();
 }
 
 void SQUE_Inspector::CleanUp()

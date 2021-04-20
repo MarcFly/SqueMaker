@@ -39,6 +39,14 @@ SQUE_Drawable& SQUE_Drawable::Get(uint32_t id)
     return invalid_drawable;
 }
 
+SQUE_Component* SQUE_Drawable::GetGenericP(uint32_t id)
+{
+    for (uint32_t i = 0; i < drawables.size(); ++i)
+        if (drawables[i].id == id)
+            return &drawables[i];
+    return NULL;
+}
+
 SQUE_Component* SQUE_Drawable::AllocateCopy(const uint32_t id)
 {
     for (uint32_t i = 0; i < drawables.size(); ++i)

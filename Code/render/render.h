@@ -34,49 +34,82 @@
     but these steps are ordered, so one can only take a look at previously generated tags!
 */
 
-typedef struct RenderTag
-{
-    // Has vectors for references to each render object type generated and data generated...
-} RenderTag;
 
-enum OutTypes
-{
-    OUT_Texture2D,
-    OUT_Texture3D,
-    OUT_Mesh,
-    //...
-};
-
+// Function calls what to do with each type of value...
+// Uniform, Drawable of a type (static, dynamic, alpha,...), Texture,
+// How to deal with uniforms? I can equate them to SQUE_Types...
 typedef struct RenderValue
 {
-    char name[32];
+    char name[16];
     uint32_t type;
     uint64_t data_size;
     void* data;
     uint32_t specific_data_type;
 } RenderValue;
 
+typedef void RenderValueFun(const RenderValue& value);
+#define RENDER_VALUE_TABLE(ENTRY) // 
+
+enum {
+    RENDER_VALUE_TABLE(X3_EXPAND_1)
+    RENDER_VALUE_TABLE_NUM_STATES
+};
+
+//static RenderValueFun RenderValueFunTable[RENDER_VALUE_TABLE_NUM_STATES] = {RENDER_VALUE_TABLE(X3_EXPAND_2)};
+//static const char* RenderValueString[RENDER_VALUE_TABLE_NUM_STATES] = {RENDER_VALUE_TABLE(X3_EXPAND_3)};
+
+
+
+
+// Input Types: Uniform, Vertex Attribute, In
+// Output Type: Out,...
+
+#define RENDER_STEP_TYPE_TABLE(ENTRY) \
+        ENTRY(RENDER_STEP_VERTEX, "Vertex") \
+        ENTRY(RENDER_STEP_FRAGMENT, "Fragment")
+
+enum {
+    RENDER_STEP_TYPE_TABLE(EXPAND_AS_ENUM)
+    RENDER_STEP_TYPE_TABLE_NUM_STATES
+};
+
+static const char* RenderTypeString[RENDER_STEP_TYPE_TABLE_NUM_STATES] = { RENDER_STEP_TYPE_TABLE(EXPAND_AS_VALUE) };
+
+
 typedef struct RenderStep
 {
-    char name[64];
-    // Tagged input and outputs
-    
-    sque_vec<uint32_t> input_tags;
+    char name[24];
+    uint32_t id = -1;
+    uint32_t type = -1;
+
+    uint32_t prev_stage_id = -1;
+    uint32_t next_stage_id = -1;
+    // sque_vec<uint32_t> input_tags;
     sque_vec<RenderValue> input_data;
     sque_vec<RenderValue> output_data;
-
+    
     SQUE_RenderState state;
 
-    uint32_t framebuffer_ref;
-    uint32_t program_ref;
+    const char* shader_source;
 } RenderStep;
+
+typedef struct CompiledSteps
+{
+    sque_vec<uint32_t> step_ids;
+
+    SQUE_Framebuffer framebuffer;
+    SQUE_Program program;
+} CompiledSteps;
 
 void Render_Init();
 void Render_Update(float dt);
 void Render_CleanUp();
 
+void Render_CompileSteps();
+
 sque_vec<RenderStep*>& Render_GetSteps();
 
+void Render_AddStep(RenderStep* render_step);
 RenderStep* Render_GetStep(uint32_t render_step_ref);
 
 #endif

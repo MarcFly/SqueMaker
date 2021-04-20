@@ -7,6 +7,7 @@ void SQUE_RenderWindow::Init()
 
     name = "Render_Window";
     render_step_ref = Render_GetSteps().size()-1; // Get Last by default
+    output_value_ref = -1;
     // This will break unless there is a default render step...
 }
 
@@ -19,46 +20,78 @@ void SQUE_RenderWindow::Update(float dt)
         {
             ImGui::End(); return;
         }
-        else 
-        {
-            rs_names.clear();
-            for (uint16_t i = 0; i < steps.size(); ++i)
-                rs_names.push_back(steps[i]->name);
-        }
-        if(ImGui::BeginCombo("##RenderSteps", rs_names[render_step_ref]))
+        ImGui::PushItemWidth(ImGui::GetWindowWidth() / 2 - 20);
+        bool step_selected;
+        if (render_step_ref > steps.size())
+            step_selected = ImGui::BeginCombo("##RenderSteps", steps[0]->name);
+        else
+            step_selected = ImGui::BeginCombo("##RenderSteps", steps[render_step_ref]->name);
+        if(step_selected)
         {
             bool is_selected;
-            for (uint16_t i = 0; i < rs_names.size(); ++i)
+            for (uint16_t i = 0; i < steps.size(); ++i)
             {
                 is_selected = (i == render_step_ref);
-                if (ImGui::Selectable(rs_names[i], &is_selected))
+                if (ImGui::Selectable(steps[i]->name, &is_selected))
                 {
                     render_step_ref = i;
                     break;
                 }
             }
-
-            if (steps[render_step_ref]->output_data.size() > 0)
-            {
-                t_names.clear();
-                //for (uint16_t i = 0; i < steps[render_step_ref]->output_data.size(); ++i)
-
-                if (ImGui::BeginCombo("##OutValues", t_names[output_value_ref]))
-                {
-
-                }
-            }
+            
             ImGui::EndCombo();
         }
-        
+        if (render_step_ref > steps.size())
+        {
+            ImGui::End();
+            return;
+        }
+        else
+        {
+            ImGui::SameLine();
+            RenderStep* step = steps[render_step_ref];
+            sque_vec<RenderValue>& output = step->output_data;
+            if (output.size() > 0)
+            {
+                bool combo_open = false;
+
+                if (output_value_ref > output.size())
+                    combo_open = ImGui::BeginCombo("##OutValues", output[0].name);
+                else
+                    combo_open = ImGui::BeginCombo("##OutValues", output[output_value_ref].name);
+                if (combo_open)
+                {
+                    bool is_selected;
+                    for (uint16_t i = 0; i < output.size(); ++i)
+                    {
+                        is_selected = (i == output_value_ref);
+                        if (ImGui::Selectable(output[i].name, &is_selected))
+                        {
+                            output_value_ref = i;
+                            break;
+                        }
+
+                    }
+                    ImGui::EndCombo();
+                }
+            }
+        }
+        ImGui::PopItemWidth();
+
+        ImGui::BeginChild("RenderOutput");
         if(render_step_ref != -1)
         {    
             RenderStep* r_step = Render_GetStep(render_step_ref);
-
-
+            ImGui::GetWindowSize();
+            if (output_value_ref != -1)
+            {
+                ImVec2 wsize = ImGui::GetWindowSize();
+                ImGui::Image(r_step->output_data[output_value_ref].data, wsize, ImVec2(0,1), ImVec2(1,0));
+            }
         }
-        ImGui::End();
+        ImGui::EndChild();
     }
+    ImGui::End();
 }
 
 void SQUE_RenderWindow::CleanUp()

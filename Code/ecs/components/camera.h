@@ -10,9 +10,9 @@ public:
 // Required for all components
     static SQUE_Component Create();
     static SQUE_Component Create(const SQUE_Camera& copy);
-    static SQUE_Component Create(const SQUE_Component* copy) { return SQUE_Component(); }; // TODO
+    static SQUE_Component Create(const SQUE_Component* copy);
     static SQUE_Camera& Get(uint32_t id);
-    static SQUE_Component* GetT(const uint32_t id) { return NULL; }; // TODO
+    static SQUE_Component* GetGenericP(const uint32_t id);
     static SQUE_Component* AllocateCopy(const uint32_t id);
 
     static const uint32_t static_type = SQUE_ECS_CAMERA;

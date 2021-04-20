@@ -8,6 +8,7 @@
 struct SQUE_MenuItem
 {
     bool* active_state;
+    uint32_t id;
     const char* name;
     sque_vec<uint32_t> sub_items;
     const char* shortcut;
@@ -57,14 +58,11 @@ public:
         mi.name = name;
         mi.shortcut = shortcut;
         mi.cb = callback;
+        mi.id = SQUE_RNG();
         items.push_back(mi);
-        uint32_t ret = items.size() - 1;
         bar_items[bar].sub_items.push_back(items.size() - 1);
 
-        // Dealing with Sub item in another way (ids...)
-        // items[sub_item].sub_items.push_back(ret);
-
-        return ret; // TODO: should return id rather than ref...
+        return mi.id; // Return ID for later usage (maybe in future change command preferences or shortcut and such)
     };
 
     void Init() final

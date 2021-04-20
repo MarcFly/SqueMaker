@@ -430,5 +430,7 @@ void SQUE_Hierarchy::Update(float dt)
 
         EngineUI_RequireUpdate(active);
 
-    } ImGui::End();        
+
+    }
+    ImGui::End();
 }

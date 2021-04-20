@@ -14,14 +14,7 @@ private:
     SQUE_Camera camera;
     uint32_t render_step_ref;
     uint32_t output_value_ref;
-    // For usage
 
-    // RenderStep Combo
-    sque_vec<const char*> rs_names;
-
-    // Texture Combo
-    sque_vec<const char*> t_names;
-    sque_vec<uint32_t> t_refs;
 public:
     void Init() final;
     void Update(float dt) final;

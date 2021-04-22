@@ -1,11 +1,11 @@
 #include "camera.h"
-sque_vec<SQUE_Camera> cameras;
+sq_free_vec<SQUE_Camera> cameras;
 static SQUE_Camera invalid_cam;
 
 SQUE_Component SQUE_Camera::Create()
 {
     SQUE_Component ret;
-    uint32_t ref = cameras.try_insert(SQUE_Camera());
+    uint32_t ref = cameras.push(SQUE_Camera());
     ret.type = SQUE_Camera::static_type;
     ret.id = cameras[ref].id;
     return ret;
@@ -14,7 +14,7 @@ SQUE_Component SQUE_Camera::Create()
 SQUE_Component SQUE_Camera::Create(const SQUE_Camera& copy)
 {
     SQUE_Component ret;
-    uint32_t ref = cameras.try_insert(SQUE_Camera());
+    uint32_t ref = cameras.push(SQUE_Camera());
     ret.type = SQUE_Camera::static_type;
     ret.id = cameras[ref].id;
     cameras[ref] = copy;
@@ -25,7 +25,7 @@ SQUE_Component SQUE_Camera::Create(const SQUE_Component* copy)
 {
     SQUE_Camera* t_copy = (SQUE_Camera*)copy;
     SQUE_Component ret;
-    uint32_t ref = cameras.try_insert(SQUE_Camera());
+    uint32_t ref = cameras.push(SQUE_Camera());
     ret.type = SQUE_Camera::static_type;
     ret.id = cameras[ref].id;
     cameras[ref] = *t_copy;

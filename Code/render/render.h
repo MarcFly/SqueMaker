@@ -41,6 +41,7 @@
 typedef struct RenderValue
 {
     char name[16];
+    int32_t id;
     uint32_t type;
     uint64_t data_size;
     void* data;

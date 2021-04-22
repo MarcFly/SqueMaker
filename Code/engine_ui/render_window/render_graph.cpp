@@ -270,8 +270,18 @@ void SQUE_RenderGraph::Update(float dt)
 			ImNodes::PopColorStyle();
 			ImNodes::PopColorStyle();
 		}
+		uint32_t link_num = 0;
+		for (list_node<AttributeLink>* iter = links.begin(); iter != NULL; iter = iter->next, ++link_num)
+		{
+			ImNodes::Link(link_num, iter->_data->in_id, iter->_data->out_id);
+		}
 
 		ImNodes::EndNodeEditor();
+
+		AttributeLink new_link;
+		if (ImNodes::IsLinkCreated(&new_link.in_id, &new_link.out_id))
+			links.push_back(new_link);
+		
 
 		UpdateRMMenu();
 	}

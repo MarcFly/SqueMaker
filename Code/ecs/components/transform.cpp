@@ -1,11 +1,11 @@
 #include "transform.h"
-sque_vec<SQUE_Transform> transforms;
+sq_free_vec<SQUE_Transform> transforms;
 static SQUE_Transform invalid_transform;
 
 SQUE_Component SQUE_Transform::Create()
 {
     SQUE_Component ret;
-    uint32_t ref = transforms.try_insert(SQUE_Transform());
+    uint32_t ref = transforms.push(SQUE_Transform());
     ret.type = SQUE_Transform::static_type;
     ret.id = transforms[ref].id;
     return ret;
@@ -14,7 +14,7 @@ SQUE_Component SQUE_Transform::Create()
 SQUE_Component SQUE_Transform::Create(const SQUE_Transform& copy)
 {
     SQUE_Component ret;
-    uint32_t ref = transforms.try_insert(SQUE_Transform());
+    uint32_t ref = transforms.push(SQUE_Transform());
     ret.type = SQUE_Transform::static_type;
     ret.id = transforms[ref].id;
     transforms[ref] = copy;
@@ -25,7 +25,7 @@ SQUE_Component SQUE_Transform::Create(const SQUE_Component* copy)
 {
     SQUE_Transform* t_copy = (SQUE_Transform*)copy;
     SQUE_Component ret;
-    uint32_t ref = transforms.try_insert(SQUE_Transform());
+    uint32_t ref = transforms.push(SQUE_Transform());
     ret.type = SQUE_Transform::static_type;
     ret.id = transforms[ref].id;
     transforms[ref] = *t_copy;

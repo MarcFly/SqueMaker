@@ -19,7 +19,7 @@
 // Should also check link types and such
 struct AttributeLink
 {
-	// Value Type
+	uint32_t type;
 	int out_id;
 	int in_id;
 };
@@ -65,10 +65,10 @@ public:
 	void UpdateRMMenu();
 
 private:
-	void UpdateNodeTitleBar(RenderStep* step, int& node_item_id, const int node_id);
-	void UpdateNodeOptions(RenderStep* step, int& node_item_id, const int node_id);
-	void UpdateNodeInputs(RenderStep* step, int& node_item_id, const int node_id);
-	void UpdateNodeOutputs(RenderStep* step, int& node_item_id, const int node_id);
+	void UpdateNodeTitleBar(RenderStep* step);
+	void UpdateNodeOptions(RenderStep* step);
+	void UpdateNodeInputs(RenderStep* step);
+	void UpdateNodeOutputs(RenderStep* step);
 
 };
 

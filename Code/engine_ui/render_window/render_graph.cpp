@@ -69,6 +69,7 @@ void SQUE_RenderGraph::UpdateRMMenu()
 				RenderStep* new_step = new RenderStep();
 				sprintf(new_step->name, "NewRenderStep");
 				new_step->type = RENDER_STEP_VERTEX;
+				new_step->shader_out.type = RENDER_STEP_VERTEX;
 				Render_AddStep(new_step);
 			}
 			if (ImGui::MenuItem("Add Fragment Step"))
@@ -76,6 +77,8 @@ void SQUE_RenderGraph::UpdateRMMenu()
 				RenderStep* new_step = new RenderStep();
 				sprintf(new_step->name, "NewRenderStep");
 				new_step->type = RENDER_STEP_FRAGMENT;
+				new_step->shader_in.type = RENDER_STEP_VERTEX;
+				new_step->shader_out.type = RENDER_STEP_FRAGMENT;
 				Render_AddStep(new_step);
 			}
 		}
@@ -103,10 +106,8 @@ void SQUE_RenderGraph::UpdateRMMenu()
 }
 
 
-void SQUE_RenderGraph::UpdateNodeTitleBar(RenderStep* step, int& item_id, const int node_id)
+void SQUE_RenderGraph::UpdateNodeTitleBar(RenderStep* step)
 {
-	
-
 	ImNodes::BeginNodeTitleBar();
 	static char id[26];
 
@@ -114,7 +115,7 @@ void SQUE_RenderGraph::UpdateNodeTitleBar(RenderStep* step, int& item_id, const 
 	ImGui::SameLine();
 	if (editing_name)
 	{
-		sprintf(id, "##NodeTitleID%d", item_id);
+		sprintf(id, "##NodeTitleID%d", step->id);
 		ImGui::PushItemWidth(64 * 3 + 10);
 		ImGui::InputText(id, step->name, sizeof(step->name));
 		ImGui::PopItemWidth();
@@ -122,42 +123,41 @@ void SQUE_RenderGraph::UpdateNodeTitleBar(RenderStep* step, int& item_id, const 
 	else
 		ImGui::Text(step->name);
 
-	ImNodes::BeginInputAttribute(item_id++, ImNodesPinShape_QuadFilled);
+	ImNodes::BeginInputAttribute(step->id+1, ImNodesPinShape_QuadFilled);
 	ImNodes::EndInputAttribute();
-	ImNodes::BeginOutputAttribute(item_id++, ImNodesPinShape_QuadFilled);
+	ImNodes::BeginOutputAttribute(step->id-1, ImNodesPinShape_QuadFilled);
 	ImNodes::EndOutputAttribute();
 
-	ImNodes::EndNodeTitleBar();
-
-	
+	ImNodes::EndNodeTitleBar();	
 }
 
 
-void SQUE_RenderGraph::UpdateNodeOptions(RenderStep* step, int& item_id, const int node_id)
+void SQUE_RenderGraph::UpdateNodeOptions(RenderStep* step)
 {
 	// TODO: Change from buttons to another right mouse menu for each node specific
 	// Node settings outside of the canvas
 	// Smae with name changes, try on a per item basis somehow
-
-	static RenderValue input_def;
-	sprintf(input_def.name, "Input Value %d", step->input_data.size());
 	if (ImGui::Button(ICON_FK_PLUS"##In", ImVec2(20, 20)))
 	{
+		RenderValue input_def;
+		input_def.id = SQUE_RNG();
+		sprintf(input_def.name, "Input %d", input_def.id);
 		step->input_data.push_back(input_def);
 	}
 	
-	ImVec2 node_dimentions = ImNodes::GetNodeDimensions(node_id);
+	ImVec2 node_dimentions = ImNodes::GetNodeDimensions(step->id);
 	ImGui::SameLine(node_dimentions.x - 40);
 
-	static RenderValue output_def;
-	sprintf(output_def.name, "Output Value %d", step->output_data.size());
 	if (ImGui::Button(ICON_FK_PLUS"##Out", ImVec2(20, 20)))
 	{
+		RenderValue output_def;
+		output_def.id = SQUE_RNG();
+		sprintf(output_def.name, "Output %d", output_def.id);
 		step->output_data.push_back(output_def);
 	}
 }
 
-void SQUE_RenderGraph::UpdateNodeInputs(RenderStep* step, int& item_id, const int node_id)
+void SQUE_RenderGraph::UpdateNodeInputs(RenderStep* step)
 {
 	sque_vec<RenderValue>& inputs = step->input_data;
 
@@ -166,11 +166,11 @@ void SQUE_RenderGraph::UpdateNodeInputs(RenderStep* step, int& item_id, const in
 	{
 		// Push Color Style
 
-		ImNodes::BeginInputAttribute(item_id++);
+		ImNodes::BeginInputAttribute(inputs[i].id);
 		if (editing_name)
 		{
 			static char id[26];
-			sprintf(id, "##%s%d", inputs[i].name, item_id);
+			sprintf(id, "##%s%d", inputs[i].name, inputs[i].id);
 			ImGui::InputText("", inputs[i].name, sizeof(inputs[i].name));
 		}
 		else
@@ -190,7 +190,7 @@ void SQUE_RenderGraph::UpdateNodeInputs(RenderStep* step, int& item_id, const in
 	}	
 }
 
-void SQUE_RenderGraph::UpdateNodeOutputs(RenderStep* step, int& item_id, const int node_id)
+void SQUE_RenderGraph::UpdateNodeOutputs(RenderStep* step)
 {
 	sque_vec<RenderValue>& outputs = step->output_data;
 	// Outputs
@@ -198,7 +198,7 @@ void SQUE_RenderGraph::UpdateNodeOutputs(RenderStep* step, int& item_id, const i
 	for (uint16_t i = 0; i < outputs.size(); ++i)
 	{
 		// TODO: Push Color Styles
-		ImNodes::BeginOutputAttribute(item_id++);
+		ImNodes::BeginOutputAttribute(outputs[i].id);
 
 		sprintf(options, "%s##OutValueOption%d", ICON_FK_WRENCH, i);
 		if (ImGui::Button(options, ImVec2(20, 20)))
@@ -210,7 +210,7 @@ void SQUE_RenderGraph::UpdateNodeOutputs(RenderStep* step, int& item_id, const i
 		if (editing_name)
 		{
 			static char id[26];
-			sprintf(id, "##%s%d", outputs[i].name, item_id);
+			sprintf(id, "##%s%d", outputs[i].name, outputs[i].id);
 			ImGui::InputText(id, outputs[i].name, sizeof(outputs[i].name));
 		}
 		else
@@ -246,19 +246,19 @@ void SQUE_RenderGraph::Update(float dt)
 			ImNodes::PushColorStyle(ImNodesCol_TitleBarHovered, title_color[step->type]);
 			ImNodes::PushColorStyle(ImNodesCol_TitleBarSelected, title_selected_color[step->type]);
 			
-			ImNodes::BeginNode(item_id++);
+			ImNodes::BeginNode(step->id);
 			
-			UpdateNodeTitleBar(step, item_id, node_id);
-			UpdateNodeOptions(step, item_id, node_id);
+			UpdateNodeTitleBar(step);
+			UpdateNodeOptions(step);
 
 			ImGui::PushItemWidth(64 * 3 - 20);
 
-			UpdateNodeInputs(step, item_id, node_id);
+			UpdateNodeInputs(step);
 			
-			ImVec2 node_dimentions = ImNodes::GetNodeDimensions(node_id);
+			ImVec2 node_dimentions = ImNodes::GetNodeDimensions(step->id);
 			ImGui::Indent(node_dimentions.x / 3 - 30);
 
-			UpdateNodeOutputs(step, item_id, node_id);
+			UpdateNodeOutputs(step);
 
 			ImGui::Unindent(node_dimentions.x / 3 - 30);
 
@@ -280,7 +280,12 @@ void SQUE_RenderGraph::Update(float dt)
 
 		AttributeLink new_link;
 		if (ImNodes::IsLinkCreated(&new_link.in_id, &new_link.out_id))
-			links.push_back(new_link);
+		{
+			RenderValue* in = Render_GetValue(new_link.in_id);
+			RenderValue* out = Render_GetValue(new_link.out_id);
+			if(in != out != NULL && in->type == out->type)
+				links.push_back(new_link);
+		}
 		
 
 		UpdateRMMenu();

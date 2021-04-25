@@ -25,20 +25,18 @@ public:
 
     glm::mat4x4 worldMatrix;
     SQUE_Mesh draw_data;
-    uint32_t vertex_data_id;
-    uint32_t index_data_id;
     uint32_t material_refs[5];
 
     // Copy For the data, ID is copied only if when required like in UI
     SQUE_Drawable& operator=(const SQUE_Drawable& copy)
     {
         draw_data = copy.draw_data;
-        vertex_data_id = copy.vertex_data_id;
-        index_data_id = index_data_id;
         memcpy(material_refs, copy.material_refs, sizeof(material_refs));
         worldMatrix = copy.worldMatrix;
         return *this;
     }
 };
+
+// DoDrawables();
 
 #endif

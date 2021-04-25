@@ -41,7 +41,7 @@
 typedef struct RenderValue
 {
     char name[16];
-    int32_t id;
+    uint32_t id;
     uint32_t type;
     uint64_t data_size;
     void* data;
@@ -64,7 +64,7 @@ enum {
 
 // Input Types: Uniform, Vertex Attribute, In
 // Output Type: Out,...
-
+// TODO: Join Render_Step and Values -> String and Deal with Function (Float, Vec2, Vec3, Vec4, Matrix4x4,...)
 #define RENDER_STEP_TYPE_TABLE(ENTRY) \
         ENTRY(RENDER_STEP_VERTEX, "Vertex") \
         ENTRY(RENDER_STEP_FRAGMENT, "Fragment")
@@ -85,6 +85,8 @@ typedef struct RenderStep
 
     uint32_t prev_stage_id = -1;
     uint32_t next_stage_id = -1;
+    RenderValue shader_in;
+    RenderValue shader_out;
     // sque_vec<uint32_t> input_tags;
     sque_vec<RenderValue> input_data;
     sque_vec<RenderValue> output_data;
@@ -109,6 +111,8 @@ void Render_CleanUp();
 void Render_CompileSteps();
 
 sque_vec<RenderStep*>& Render_GetSteps();
+
+RenderValue* Render_GetValue(const uint32_t id);
 
 void Render_AddStep(RenderStep* render_step);
 RenderStep* Render_GetStep(uint32_t render_step_ref);

@@ -34,7 +34,6 @@ void Render_AddStep(RenderStep* step)
 {
     step->id = SQUE_RNG();
     render_steps.push_back(step);
-    step->id = SQUE_RNG();
 }
 
 void Render_CompileSteps()
@@ -48,9 +47,12 @@ sque_vec<RenderStep*>& Render_GetSteps()
     return render_steps;
 }
 
-RenderStep* Render_GetStep(uint32_t render_step_ref)
+RenderStep* Render_GetStep(uint32_t render_step_id)
 {
-    return render_steps[render_step_ref];
+    for (uint32_t i = 0; i < render_steps.size(); ++i)
+        if (render_step_id == render_steps[i]->id)
+            return render_steps[i];
+    return NULL;
 }
 
 RenderValue* Render_GetValue(const uint32_t id)

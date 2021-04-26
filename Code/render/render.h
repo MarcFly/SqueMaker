@@ -40,41 +40,37 @@
 // How to deal with uniforms? I can equate them to SQUE_Types...
 typedef struct RenderValue
 {
-    char name[16];
-    uint32_t id;
-    uint32_t type;
-    uint64_t data_size;
-    void* data;
-    uint32_t specific_data_type;
+    char name[16] = "RenderValue";
+    uint32_t id = -1;
+    uint32_t type = -1;
 } RenderValue;
 
 typedef void RenderValueFun(const RenderValue& value);
-#define RENDER_VALUE_TABLE(ENTRY) // 
+inline void BadRenderValueFun(const RenderValue& value) 
+{
+    // Perform Operations related to value for a shader
+    // Set Uniform, Perform linkage from a fragment shader to a Vertex shader,...
+    // Will have to deal with it in the step of compiling and such.
+    // This type of funs should be called inline
+}
+// Shader Types will have to be put between Vertex and Fragment
+#define RENDER_VALUE_TABLE(ENTRY) \
+        ENTRY(RENDER_VALUE_VERTEX, "Vertex", BadRenderValueFun) \
+        ENTRY(RENDER_VALUE_FRAGMENT, "Fragment", BadRenderValueFun) \
+        ENTRY(RENDER_VALUE_FLOAT, "Float", BadRenderValueFun)
 
 enum {
     RENDER_VALUE_TABLE(X3_EXPAND_1)
     RENDER_VALUE_TABLE_NUM_STATES
 };
 
-//static RenderValueFun RenderValueFunTable[RENDER_VALUE_TABLE_NUM_STATES] = {RENDER_VALUE_TABLE(X3_EXPAND_2)};
-//static const char* RenderValueString[RENDER_VALUE_TABLE_NUM_STATES] = {RENDER_VALUE_TABLE(X3_EXPAND_3)};
-
-
-
-
 // Input Types: Uniform, Vertex Attribute, In
 // Output Type: Out,...
 // TODO: Join Render_Step and Values -> String and Deal with Function (Float, Vec2, Vec3, Vec4, Matrix4x4,...)
-#define RENDER_STEP_TYPE_TABLE(ENTRY) \
-        ENTRY(RENDER_STEP_VERTEX, "Vertex") \
-        ENTRY(RENDER_STEP_FRAGMENT, "Fragment")
 
-enum {
-    RENDER_STEP_TYPE_TABLE(EXPAND_AS_ENUM)
-    RENDER_STEP_TYPE_TABLE_NUM_STATES
-};
+static const char* RenderValueString[RENDER_VALUE_TABLE_NUM_STATES] = { RENDER_VALUE_TABLE(X3_EXPAND_2) };
+static RenderValueFun* RenderValueFunTable[RENDER_VALUE_TABLE_NUM_STATES] = {RENDER_VALUE_TABLE(X3_EXPAND_3)};
 
-static const char* RenderTypeString[RENDER_STEP_TYPE_TABLE_NUM_STATES] = { RENDER_STEP_TYPE_TABLE(EXPAND_AS_VALUE) };
 
 
 typedef struct RenderStep
@@ -83,8 +79,6 @@ typedef struct RenderStep
     uint32_t id = -1;
     uint32_t type = -1;
 
-    uint32_t prev_stage_id = -1;
-    uint32_t next_stage_id = -1;
     RenderValue shader_in;
     RenderValue shader_out;
     // sque_vec<uint32_t> input_tags;
@@ -115,6 +109,6 @@ sque_vec<RenderStep*>& Render_GetSteps();
 RenderValue* Render_GetValue(const uint32_t id);
 
 void Render_AddStep(RenderStep* render_step);
-RenderStep* Render_GetStep(uint32_t render_step_ref);
+RenderStep* Render_GetStep(uint32_t render_step_id);
 
 #endif

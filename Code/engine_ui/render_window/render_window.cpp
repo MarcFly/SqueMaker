@@ -86,7 +86,9 @@ void SQUE_RenderWindow::Update(float dt)
             if (output_value_ref != -1)
             {
                 ImVec2 wsize = ImGui::GetWindowSize();
-                ImGui::Image(r_step->output_data[output_value_ref].data, wsize, ImVec2(0,1), ImVec2(1,0));
+                // Data should not be held in values, but in the compiled steps
+                // Compiled 
+                //ImGui::Image(r_step->output_data[output_value_ref].data, wsize, ImVec2(0,1), ImVec2(1,0));
             }
         }
         ImGui::EndChild();

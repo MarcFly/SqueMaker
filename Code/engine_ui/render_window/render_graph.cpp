@@ -27,14 +27,14 @@ void SQUE_RenderGraph::Init()
 	EngineUI_RegisterMessager(&msgr);
 
 	// Set all colors.... have an editor and a way to save them too
-	title_color[RENDER_STEP_VERTEX] = ImVec4(0,.5,0,1);
-	title_color[RENDER_STEP_FRAGMENT] = ImVec4(.5,0,0,1);
+	title_color[RENDER_VALUE_VERTEX] = ImVec4(0,.5,0,1);
+	title_color[RENDER_VALUE_FRAGMENT] = ImVec4(.5,0,0,1);
 
-	title_hovered_color[RENDER_STEP_VERTEX] = ImVec4(0,.9, 0,1);
-	title_hovered_color[RENDER_STEP_FRAGMENT] = ImVec4(.0,0,0,1);
+	title_hovered_color[RENDER_VALUE_VERTEX] = ImVec4(0,.9, 0,1);
+	title_hovered_color[RENDER_VALUE_FRAGMENT] = ImVec4(.0,0,0,1);
 	
-	title_selected_color[RENDER_STEP_VERTEX] = ImVec4(0, .7,0,1);
-	title_selected_color[RENDER_STEP_FRAGMENT] = ImVec4(.7,0,0,1);
+	title_selected_color[RENDER_VALUE_VERTEX] = ImVec4(0, .7,0,1);
+	title_selected_color[RENDER_VALUE_FRAGMENT] = ImVec4(.7,0,0,1);
 }
 
 static bool was_opened_node = false;
@@ -68,17 +68,18 @@ void SQUE_RenderGraph::UpdateRMMenu()
 			{
 				RenderStep* new_step = new RenderStep();
 				sprintf(new_step->name, "NewRenderStep");
-				new_step->type = RENDER_STEP_VERTEX;
-				new_step->shader_out.type = RENDER_STEP_VERTEX;
+				new_step->type = RENDER_VALUE_VERTEX;
+				new_step->shader_out.type = RENDER_VALUE_VERTEX;
+				new_step->shader_out.id = SQUE_RNG();
 				Render_AddStep(new_step);
 			}
 			if (ImGui::MenuItem("Add Fragment Step"))
 			{
 				RenderStep* new_step = new RenderStep();
 				sprintf(new_step->name, "NewRenderStep");
-				new_step->type = RENDER_STEP_FRAGMENT;
-				new_step->shader_in.type = RENDER_STEP_VERTEX;
-				new_step->shader_out.type = RENDER_STEP_FRAGMENT;
+				new_step->type = RENDER_VALUE_FRAGMENT;
+				new_step->shader_in.type = RENDER_VALUE_VERTEX;
+				new_step->shader_in.id = SQUE_RNG();
 				Render_AddStep(new_step);
 			}
 		}
@@ -87,11 +88,34 @@ void SQUE_RenderGraph::UpdateRMMenu()
 	// Node Right Mouse Menu
 	if (was_opened_node)
 	{
+		uint16_t num_nodes = ImNodes::NumSelectedNodes();
+		int* selected = new int[num_nodes];
+		ImNodes::GetSelectedNodes(selected);
+
 		if (ImGui::MenuItem("Delete Node"))
 		{
 			bool test = false;
 		}
+		
 		ImGui::Separator();
+
+		if (ImGui::MenuItem("Add Input"))
+		{
+			RenderValue input_def;
+			input_def.id = SQUE_RNG();
+			sprintf(input_def.name, "Input %u", input_def.id);
+			input_def.type = RENDER_VALUE_FLOAT;
+			Render_GetStep(selected[0])->input_data.push_back(input_def);
+		}
+		if (ImGui::MenuItem("Add Output"))
+		{
+			RenderValue output_def;
+			output_def.id = SQUE_RNG();
+			sprintf(output_def.name, "Output %u", output_def.id);
+			output_def.type = RENDER_VALUE_FLOAT;
+			Render_GetStep(selected[0])->output_data.push_back(output_def);
+		}
+		delete selected;
 	}
 	
 	if (to_open) 
@@ -123,11 +147,16 @@ void SQUE_RenderGraph::UpdateNodeTitleBar(RenderStep* step)
 	else
 		ImGui::Text(step->name);
 
-	ImNodes::BeginInputAttribute(step->id+1, ImNodesPinShape_QuadFilled);
-	ImNodes::EndInputAttribute();
-	ImNodes::BeginOutputAttribute(step->id-1, ImNodesPinShape_QuadFilled);
-	ImNodes::EndOutputAttribute();
-
+	if (step->shader_in.type != -1)
+	{
+		ImNodes::BeginInputAttribute(step->shader_in.id, ImNodesPinShape_QuadFilled);
+		ImNodes::EndInputAttribute();
+	}
+	if (step->shader_out.type != -1)
+	{
+		ImNodes::BeginOutputAttribute(step->shader_out.id, ImNodesPinShape_QuadFilled);
+		ImNodes::EndOutputAttribute();
+	}
 	ImNodes::EndNodeTitleBar();	
 }
 
@@ -137,24 +166,6 @@ void SQUE_RenderGraph::UpdateNodeOptions(RenderStep* step)
 	// TODO: Change from buttons to another right mouse menu for each node specific
 	// Node settings outside of the canvas
 	// Smae with name changes, try on a per item basis somehow
-	if (ImGui::Button(ICON_FK_PLUS"##In", ImVec2(20, 20)))
-	{
-		RenderValue input_def;
-		input_def.id = SQUE_RNG();
-		sprintf(input_def.name, "Input %d", input_def.id);
-		step->input_data.push_back(input_def);
-	}
-	
-	ImVec2 node_dimentions = ImNodes::GetNodeDimensions(step->id);
-	ImGui::SameLine(node_dimentions.x - 40);
-
-	if (ImGui::Button(ICON_FK_PLUS"##Out", ImVec2(20, 20)))
-	{
-		RenderValue output_def;
-		output_def.id = SQUE_RNG();
-		sprintf(output_def.name, "Output %d", output_def.id);
-		step->output_data.push_back(output_def);
-	}
 }
 
 void SQUE_RenderGraph::UpdateNodeInputs(RenderStep* step)
@@ -178,10 +189,20 @@ void SQUE_RenderGraph::UpdateNodeInputs(RenderStep* step)
 		
 		ImGui::SameLine();
 
-		sprintf(options, "%s##OutValueOption%d", ICON_FK_WRENCH, i);
-		if (ImGui::Button(options, ImVec2(20, 20)))
+		sprintf(options, "##OutValueOption%d", i);
+		if(ImGui::BeginCombo(options, RenderValueString[inputs[i].type]))
 		{
-
+			bool is_selected;
+			for (uint16_t i = 1; i < RENDER_VALUE_TABLE_NUM_STATES - RENDER_VALUE_FRAGMENT; ++i)
+			{
+				is_selected = ((i + RENDER_VALUE_FRAGMENT) == inputs[i].type);
+				if (ImGui::Selectable(RenderValueString[i + RENDER_VALUE_FRAGMENT], &is_selected))
+				{
+					inputs[i].type = i + RENDER_VALUE_FRAGMENT;
+					break;
+				}
+			}
+			ImGui::EndCombo();
 		}
 
 		ImNodes::EndInputAttribute();
@@ -200,13 +221,22 @@ void SQUE_RenderGraph::UpdateNodeOutputs(RenderStep* step)
 		// TODO: Push Color Styles
 		ImNodes::BeginOutputAttribute(outputs[i].id);
 
-		sprintf(options, "%s##OutValueOption%d", ICON_FK_WRENCH, i);
-		if (ImGui::Button(options, ImVec2(20, 20)))
+		sprintf(options, "##OutValueOption%d", i);
+		if (ImGui::BeginCombo(options, RenderValueString[outputs[i].type]))
 		{
-
+			bool is_selected;
+			for (uint16_t i = 1; i < RENDER_VALUE_TABLE_NUM_STATES - RENDER_VALUE_FRAGMENT; ++i)
+			{
+				is_selected = ((i + RENDER_VALUE_FRAGMENT) == outputs[i].type);
+				if (ImGui::Selectable(RenderValueString[i + RENDER_VALUE_FRAGMENT], &is_selected))
+				{
+					outputs[i].type = i + RENDER_VALUE_FRAGMENT;
+					break;
+				}
+			}
+			ImGui::EndCombo();
 		}
 		ImGui::SameLine();
-		
 		if (editing_name)
 		{
 			static char id[26];
@@ -243,7 +273,7 @@ void SQUE_RenderGraph::Update(float dt)
 			int node_id = item_id;
 			
 			ImNodes::PushColorStyle(ImNodesCol_TitleBar, title_color[step->type]);
-			ImNodes::PushColorStyle(ImNodesCol_TitleBarHovered, title_color[step->type]);
+			ImNodes::PushColorStyle(ImNodesCol_TitleBarHovered, title_hovered_color[step->type]);
 			ImNodes::PushColorStyle(ImNodesCol_TitleBarSelected, title_selected_color[step->type]);
 			
 			ImNodes::BeginNode(step->id);
@@ -256,11 +286,14 @@ void SQUE_RenderGraph::Update(float dt)
 			UpdateNodeInputs(step);
 			
 			ImVec2 node_dimentions = ImNodes::GetNodeDimensions(step->id);
-			ImGui::Indent(node_dimentions.x / 3 - 30);
-
+			ImVec2 sep_pos = ImGui::GetCursorScreenPos();
+			sep_pos.y += 5;
+			ImDrawList* draw_list = ImGui::GetWindowDrawList();
+			draw_list->AddLine(sep_pos, ImVec2(sep_pos.x + node_dimentions.x-20, sep_pos.y), title_color[step->type], 5);
+			ImGui::SetCursorPosY(sep_pos.y - 55);
 			UpdateNodeOutputs(step);
 
-			ImGui::Unindent(node_dimentions.x / 3 - 30);
+			//ImGui::Unindent(node_dimentions.x / 3 - 30);
 
 			ImGui::PopItemWidth();
 			

@@ -51,9 +51,9 @@ class SQUE_RenderGraph : public SQUE_UI_Item
 
 	bool editing_name = false;
 	// Render Graph Options
-	ImColor title_color[RENDER_STEP_TYPE_TABLE_NUM_STATES];
-	ImColor title_hovered_color[RENDER_STEP_TYPE_TABLE_NUM_STATES];
-	ImColor title_selected_color[RENDER_STEP_TYPE_TABLE_NUM_STATES];
+	ImColor title_color[RENDER_VALUE_TABLE_NUM_STATES];
+	ImColor title_hovered_color[RENDER_VALUE_TABLE_NUM_STATES];
+	ImColor title_selected_color[RENDER_VALUE_TABLE_NUM_STATES];
 	//ImColor value_color[RENDER_VALUE_TABLE_NUM_STATES];
 	//ImColor value_hovered_color[RENDER_VALUE_TABLE_NUM_STATES];
 	

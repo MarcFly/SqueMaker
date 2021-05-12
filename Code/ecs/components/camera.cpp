@@ -1,5 +1,5 @@
 #include "camera.h"
-sq_free_vec<SQUE_Camera> cameras;
+sque_free_vec<SQUE_Camera> cameras;
 static SQUE_Camera invalid_cam;
 
 SQUE_Component SQUE_Camera::Create()

@@ -3,8 +3,8 @@
 sque_vec<SQUE_Entity> entities;
 static SQUE_Entity invalid_entity;
 sque_vec<SQUE_Entity> base_entities;
-sq_free_vec<sque_vec<uint32_t>> children_refs;
-sq_free_vec<sque_vec<SQUE_Component>> components_refs;
+sque_free_vec<sque_vec<uint32_t>> children_refs;
+sque_free_vec<sque_vec<SQUE_Component>> components_refs;
 sque_vec<char*> tags;
 
 sque_vec<SQUE_Entity> cached_entity_search;
@@ -13,12 +13,12 @@ void SQUE_ECS_EarlyDestruct()
 {
 	entities.~sque_vec();
 	base_entities.~sque_vec();
-	children_refs.~sq_free_vec();
+	children_refs.~sque_free_vec();
 
 	for (int i = 0; i < components_refs.size(); ++i)
 		components_refs[i].~sque_vec();
 
-	components_refs.~sq_free_vec();
+	components_refs.~sque_free_vec();
 }
 
 SQUE_Entity& SQUE_ECS_GetEntity(const uint32_t id)

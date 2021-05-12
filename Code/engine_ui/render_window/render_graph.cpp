@@ -31,7 +31,7 @@ void SQUE_RenderGraph::Init()
 	title_color[RENDER_VALUE_FRAGMENT] = ImVec4(.5,0,0,1);
 
 	title_hovered_color[RENDER_VALUE_VERTEX] = ImVec4(0,.9, 0,1);
-	title_hovered_color[RENDER_VALUE_FRAGMENT] = ImVec4(.0,0,0,1);
+	title_hovered_color[RENDER_VALUE_FRAGMENT] = ImVec4(.9,0,0,1);
 	
 	title_selected_color[RENDER_VALUE_VERTEX] = ImVec4(0, .7,0,1);
 	title_selected_color[RENDER_VALUE_FRAGMENT] = ImVec4(.7,0,0,1);
@@ -101,19 +101,11 @@ void SQUE_RenderGraph::UpdateRMMenu()
 
 		if (ImGui::MenuItem("Add Input"))
 		{
-			RenderValue input_def;
-			input_def.id = SQUE_RNG();
-			sprintf(input_def.name, "Input %u", input_def.id);
-			input_def.type = RENDER_VALUE_FLOAT;
-			Render_GetStep(selected[0])->input_data.push_back(input_def);
+			Render_GetStep(selected[0])->input_data.push_back(Render_GenInputValue());
 		}
 		if (ImGui::MenuItem("Add Output"))
 		{
-			RenderValue output_def;
-			output_def.id = SQUE_RNG();
-			sprintf(output_def.name, "Output %u", output_def.id);
-			output_def.type = RENDER_VALUE_FLOAT;
-			Render_GetStep(selected[0])->output_data.push_back(output_def);
+			Render_GetStep(selected[0])->output_data.push_back(Render_GenOutputValue());
 		}
 		delete selected;
 	}
@@ -180,7 +172,7 @@ void SQUE_RenderGraph::UpdateNodeInputs(RenderStep* step)
 		ImNodes::BeginInputAttribute(inputs[i].id);
 		if (editing_name)
 		{
-			static char id[26];
+			static char id[32];
 			sprintf(id, "##%s%d", inputs[i].name, inputs[i].id);
 			ImGui::InputText("", inputs[i].name, sizeof(inputs[i].name));
 		}
@@ -193,12 +185,20 @@ void SQUE_RenderGraph::UpdateNodeInputs(RenderStep* step)
 		if(ImGui::BeginCombo(options, RenderValueString[inputs[i].type]))
 		{
 			bool is_selected;
-			for (uint16_t i = 1; i < RENDER_VALUE_TABLE_NUM_STATES - RENDER_VALUE_FRAGMENT; ++i)
+			for (uint16_t j = RENDER_VALUE_FLOAT; j < RENDER_VALUE_TABLE_NUM_STATES; ++j)
 			{
-				is_selected = ((i + RENDER_VALUE_FRAGMENT) == inputs[i].type);
-				if (ImGui::Selectable(RenderValueString[i + RENDER_VALUE_FRAGMENT], &is_selected))
+				is_selected = ((j + RENDER_VALUE_FRAGMENT) == inputs[i].type);
+				if (ImGui::Selectable(RenderValueString[j], &is_selected))
 				{
-					inputs[i].type = i + RENDER_VALUE_FRAGMENT;
+					inputs[i].type = j;
+					for (auto it = links.begin(); it != NULL && it != links.end(); ++it)
+					{
+						if (it->_data->in_id == step->input_data[i].id)
+						{
+							links.pop(it);
+							break;
+						}
+					}
 					break;
 				}
 			}
@@ -213,24 +213,31 @@ void SQUE_RenderGraph::UpdateNodeInputs(RenderStep* step)
 
 void SQUE_RenderGraph::UpdateNodeOutputs(RenderStep* step)
 {
-	sque_vec<RenderValue>& outputs = step->output_data;
 	// Outputs
 	static char options[32];
-	for (uint16_t i = 0; i < outputs.size(); ++i)
+	for (uint16_t i = 0; i < step->output_data.size(); ++i)
 	{
 		// TODO: Push Color Styles
-		ImNodes::BeginOutputAttribute(outputs[i].id);
+		ImNodes::BeginOutputAttribute(step->output_data[i].id);
 
 		sprintf(options, "##OutValueOption%d", i);
-		if (ImGui::BeginCombo(options, RenderValueString[outputs[i].type]))
+		if (ImGui::BeginCombo(options, RenderValueString[step->output_data[i].type]))
 		{
 			bool is_selected;
-			for (uint16_t i = 1; i < RENDER_VALUE_TABLE_NUM_STATES - RENDER_VALUE_FRAGMENT; ++i)
+			for (uint16_t j = RENDER_VALUE_FLOAT; j < RENDER_VALUE_TABLE_NUM_STATES; ++j)
 			{
-				is_selected = ((i + RENDER_VALUE_FRAGMENT) == outputs[i].type);
-				if (ImGui::Selectable(RenderValueString[i + RENDER_VALUE_FRAGMENT], &is_selected))
+				is_selected = ((j) == step->output_data[i].type);
+				if (ImGui::Selectable(RenderValueString[j], &is_selected))
 				{
-					outputs[i].type = i + RENDER_VALUE_FRAGMENT;
+					step->output_data[i].type = j;
+					for (auto it = links.begin(); it != NULL && it != links.end(); ++it)
+					{
+						if (it->_data->in_id == step->output_data[i].id)
+						{
+							links.pop(it);
+							break;
+						}
+					}
 					break;
 				}
 			}
@@ -239,12 +246,12 @@ void SQUE_RenderGraph::UpdateNodeOutputs(RenderStep* step)
 		ImGui::SameLine();
 		if (editing_name)
 		{
-			static char id[26];
-			sprintf(id, "##%s%d", outputs[i].name, outputs[i].id);
-			ImGui::InputText(id, outputs[i].name, sizeof(outputs[i].name));
+			static char id[32];
+			sprintf(id, "##%s%d", step->output_data[i].name, step->output_data[i].id);
+			ImGui::InputText(id, step->output_data[i].name, sizeof(step->output_data[i].name));
 		}
 		else
-			ImGui::Text(outputs[i].name);
+			ImGui::Text(step->output_data[i].name);
 		ImNodes::EndInputAttribute();
 		// TODO: Pop Color styles
 	}
@@ -304,20 +311,57 @@ void SQUE_RenderGraph::Update(float dt)
 			ImNodes::PopColorStyle();
 		}
 		uint32_t link_num = 0;
-		for (list_node<AttributeLink>* iter = links.begin(); iter != NULL; iter = iter->next, ++link_num)
+		list_node<AttributeLink>* t = links.begin();
+		for (list_node<AttributeLink>* iter = links.begin(); iter != links.end(); iter = iter->next, ++link_num)
 		{
 			ImNodes::Link(link_num, iter->_data->in_id, iter->_data->out_id);
 		}
 
 		ImNodes::EndNodeEditor();
 
-		AttributeLink new_link;
+		static AttributeLink new_link;
 		if (ImNodes::IsLinkCreated(&new_link.in_id, &new_link.out_id))
 		{
-			RenderValue* in = Render_GetValue(new_link.in_id);
-			RenderValue* out = Render_GetValue(new_link.out_id);
-			if(in != out != NULL && in->type == out->type)
-				links.push_back(new_link);
+			
+			if (new_link.in_id != new_link.out_id)
+			{
+				if (CHK_FLAG(new_link.in_id, 1))
+				{
+					int temp = new_link.in_id;
+					new_link.in_id = new_link.out_id;
+					new_link.out_id = temp;
+				}
+
+				RenderValue* in = Render_GetValue(new_link.in_id);
+				RenderValue* out = Render_GetValue(new_link.out_id);
+
+				if (in != NULL && out != NULL && in->type == out->type)
+				{
+					for (list_node<AttributeLink>* it = links.begin(); it != links.end(); it = it->next)
+					{
+						if (it->_data->in_id == in->id)
+						{
+							it->_data->out_id = out->id;
+							out = NULL;
+							break;
+						}
+					}
+					if(out != NULL) links.push_back(new_link);
+				}
+			}				
+		}
+		
+		static int detached_link;
+		if (ImNodes::IsLinkDestroyed(&detached_link))
+		{
+			for (auto it = links.begin(); it != NULL && it != links.end(); ++it)
+			{
+				if (it->_data->out_id == detached_link)
+				{
+					links.pop(it);
+					break;
+				}
+			}
 		}
 		
 

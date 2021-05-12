@@ -1,5 +1,5 @@
 #include "drawable.h"
-sq_free_vec<SQUE_Drawable> drawables;
+sque_free_vec<SQUE_Drawable> drawables;
 static SQUE_Drawable invalid_drawable;
 
 SQUE_Component SQUE_Drawable::Create()

@@ -40,10 +40,13 @@
 // How to deal with uniforms? I can equate them to SQUE_Types...
 typedef struct RenderValue
 {
-    char name[16] = "RenderValue";
-    uint32_t id = -1;
+    char name[24] = "RenderValue";
+    int id = -1; // Because the id system in imnodes uses only int and there is not proper translation between them...
     uint32_t type = -1;
 } RenderValue;
+
+RenderValue Render_GenInputValue();
+RenderValue Render_GenOutputValue();
 
 typedef void RenderValueFun(const RenderValue& value);
 inline void BadRenderValueFun(const RenderValue& value) 
@@ -57,7 +60,13 @@ inline void BadRenderValueFun(const RenderValue& value)
 #define RENDER_VALUE_TABLE(ENTRY) \
         ENTRY(RENDER_VALUE_VERTEX, "Vertex", BadRenderValueFun) \
         ENTRY(RENDER_VALUE_FRAGMENT, "Fragment", BadRenderValueFun) \
-        ENTRY(RENDER_VALUE_FLOAT, "Float", BadRenderValueFun)
+        ENTRY(RENDER_VALUE_FLOAT, "Float", BadRenderValueFun) \
+        ENTRY(RENDER_VALUE_INT, "Int", BadRenderValueFun) \
+        ENTRY(RENDER_VALUE_TEXTURE, "Texture", BadRenderValueFun) \
+        ENTRY(RENDER_VALUE_MATRIX4x4, "Matrix4x4", BadRenderValueFun) \
+        ENTRY(RENDER_VALUE_FVEC2, "FVec2", BadRenderValueFun) \
+        ENTRY(RENDER_VALUE_FVEC3, "FVec3", BadRenderValueFun) \
+        ENTRY(RENDER_VALUE_FVEC4, "FVec4", BadRenderValueFun)
 
 enum {
     RENDER_VALUE_TABLE(X3_EXPAND_1)

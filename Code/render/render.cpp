@@ -30,6 +30,26 @@ void Render_CleanUp()
     render_steps.clear();
 }
 
+RenderValue Render_GenInputValue()
+{
+    RenderValue ret;
+    ret.id = SQUE_RNG(INT32_MAX-1);
+    CLR_FLAG(ret.id, 1);
+    sprintf(ret.name, "Input");
+    ret.type = RENDER_VALUE_FLOAT;
+    return ret;
+}
+
+RenderValue Render_GenOutputValue()
+{
+    RenderValue ret;
+    ret.id = SQUE_RNG(INT32_MAX-1);
+    SET_FLAG(ret.id, 1);
+    sprintf(ret.name, "Output");
+    ret.type = RENDER_VALUE_FLOAT;
+    return ret;
+}
+
 void Render_AddStep(RenderStep* step)
 {
     step->id = SQUE_RNG();

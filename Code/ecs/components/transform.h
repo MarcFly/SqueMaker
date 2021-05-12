@@ -2,7 +2,7 @@
 #define _ECS_COMPONENT_TRANSFORM_
 
 #include <squelib.h>
-#include <glm/detail/type_quat.hpp>
+#include <glm/gtc/quaternion.hpp>
 #include "../ecs.h"
 
 class SQUE_Transform : public SQUE_Component
@@ -22,7 +22,7 @@ public:
     ~SQUE_Transform();
 
     glm::vec3 position;
-    glm::fquat rotation;
+    glm::quat rotation;
     glm::vec3 scale;
 
     SQUE_Transform& operator=(const SQUE_Transform& copy)

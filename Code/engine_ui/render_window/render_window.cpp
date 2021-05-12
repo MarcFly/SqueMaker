@@ -29,10 +29,12 @@ void SQUE_RenderWindow::Update(float dt)
         if(step_selected)
         {
             bool is_selected;
+            static char selectable_name[32];
             for (uint16_t i = 0; i < steps.size(); ++i)
             {
                 is_selected = (i == render_step_ref);
-                if (ImGui::Selectable(steps[i]->name, &is_selected))
+                sprintf_s(selectable_name, "%s##%u", steps[i]->name, i);
+                if (ImGui::Selectable(selectable_name, &is_selected))
                 {
                     render_step_ref = i;
                     break;

@@ -1,5 +1,5 @@
 #include "transform.h"
-sq_free_vec<SQUE_Transform> transforms;
+sque_free_vec<SQUE_Transform> transforms;
 static SQUE_Transform invalid_transform;
 
 SQUE_Component SQUE_Transform::Create()

@@ -3,6 +3,7 @@
 
 #include <squelib.h>
 #include "../ecs.h"
+#include <glm.hpp>
 
 class SQUE_Drawable : public SQUE_Component
 {

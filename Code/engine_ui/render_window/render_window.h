@@ -4,13 +4,13 @@
 #include "../engine_ui.h"
 #include "../../ecs/components/camera.h"
 #include "../../render/render.h"
-#include <glm/detail/type_quat.hpp>
+#include <glm/gtc/quaternion.hpp>
 
 class SQUE_RenderWindow : public SQUE_UI_Item
 {
 private:
     glm::vec3 position;
-    glm::fquat rotation;
+    glm::quat rotation;
     SQUE_Camera camera;
     uint32_t render_step_ref;
     uint32_t output_value_ref;

@@ -47,7 +47,7 @@ class SQUE_RenderGraph : public SQUE_UI_Item
 	sque_vec<RenderStep_UI_Item> steps;
 	SQUE_RenderGraph_Messager msgr;
 	SQUE_RMPopupMenu rm_menu;
-	sq_list<AttributeLink> links;
+	sque_list<AttributeLink> links;
 
 	bool editing_name = false;
 	// Render Graph Options

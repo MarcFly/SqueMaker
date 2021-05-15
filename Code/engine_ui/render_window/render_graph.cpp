@@ -69,8 +69,8 @@ void SQUE_RenderGraph::UpdateRMMenu()
 				RenderStep* new_step = new RenderStep();
 				sprintf(new_step->name, "NewRenderStep");
 				new_step->type = RENDER_VALUE_VERTEX;
+				new_step->shader_out = Render_GenOutputValue();
 				new_step->shader_out.type = RENDER_VALUE_VERTEX;
-				new_step->shader_out.id = SQUE_RNG();
 				Render_AddStep(new_step);
 			}
 			if (ImGui::MenuItem("Add Fragment Step"))
@@ -78,8 +78,8 @@ void SQUE_RenderGraph::UpdateRMMenu()
 				RenderStep* new_step = new RenderStep();
 				sprintf(new_step->name, "NewRenderStep");
 				new_step->type = RENDER_VALUE_FRAGMENT;
+				new_step->shader_in = Render_GenInputValue();
 				new_step->shader_in.type = RENDER_VALUE_VERTEX;
-				new_step->shader_in.id = SQUE_RNG();
 				Render_AddStep(new_step);
 			}
 		}

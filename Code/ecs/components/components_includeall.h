@@ -71,4 +71,7 @@ static AllocateCopyFun* ComponentAllocateCopyFunTable[COMPONENT_ALLOCATE_COPY_NU
 	COMPONENT_ALLOCATE_COPY_TABLE(EXPAND_AS_VALUE)
 };
 
+// TODO: Change all xmacros to use the sque_vec initializer, so they become expandable macros!
+static sque_dyn_arr<GetFun*> TestGetFunVec = { COMPONENT_GET_TABLE(EXPAND_AS_VALUE) };
+
 #endif

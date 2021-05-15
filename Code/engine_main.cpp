@@ -2,12 +2,15 @@
 #include <squelib.h>
 #include <render/render.h>
 #include <ecs/ecs.h>
+#include <asset_manager/asset_manager.h>
 
 int main(int argc, char** argv)
 {
     // Libraries Init
     SQUE_LIB_Init("Sque Maker");
 
+    SQUE_DISPLAY_SetDropFileCallback(AssetManager_HandleDropFile);
+    
     // Init Modules
     Render_Init();
     EngineUI_Init();
@@ -17,6 +20,7 @@ int main(int argc, char** argv)
     float dt = 1 / 60.;
     while(!SQUE_DISPLAY_ShouldWindowClose(0))
     {
+        AssetManager_Update();
         // SqueLib Loop Needed
         SQUE_INPUT_Process(0);
         SQUE_RENDER_Clear(ColorRGBA(.2, .2, .2, 1.));

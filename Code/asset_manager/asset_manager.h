@@ -21,7 +21,7 @@
     What should asset manager be and do:
     - Manage the calls to load data
     - Hold all the assets
-    - Routinely check up for modified data
+    - Routinely check up for modified data - Filewatching
     - Unload data that has been unused periodically (not immediately)
     - Load data parallelly and tell when specific items are ready or unloaded
     - Classify data by types so that access is specific
@@ -29,29 +29,57 @@
     - All assets have to be symbolized - aka loaded with its properties but not the actual data until used
 */
 
-enum AssetTypes
+typedef struct DataPack
 {
-
+    void* data;
+    uint64_t data_size;
+    void* metadata;
+    uint64_t metadata_size;
 };
 
-typedef void(*ReadWriteAssetFun)(const char* location, void* data, uint64_t& _data_size);
+typedef void(ReadWriteAssetFun)(const char* location, DataPack* datapack);
+typedef void(UnloadAssetFun)();
+
 
 typedef struct Asset
 {
-    uint32_t id;
-    SQUE_Timer unused_timer;
-    char name[64];
-    char location[512];
-    uint32_t type;
-    void* specific_metadata = NULL; // This will be taken care per type basis
-    
-    ReadWriteAssetFun Save;
-    ReadWriteAssetFun Load;
+// Static Data - Generated or Loaded
+    uint32_t id = -1;
+    char name[64] = "";
+    char location[512] = "";
+    uint32_t type = -1; //?
 
-    uint64_t _data_size;
-    void* data = NULL;
+// Runtime Updates
+    SQUE_Timer unused_timer;
+    uint32_t current_users = 0;
+
+// Type Based functions  
+    ReadWriteAssetFun* Save;
+    ReadWriteAssetFun* Load;
+    UnloadAssetFun* Unload;
+
+// Actual Data
+    DataPack datapack;
 };
 
+void AssetManager_ChangeUnusedTimeUnload(const double time_ms);
+uint32_t AssetManager_DeclareAsset(const char* name, const char* location);
+Asset* AssetManager_Get(const uint32_t id);
+const Asset* AssetManager_GetConst(const uint32_t id);
+void AssetManager_UseAsset(const uint32_t id);
+void AssetManager_UnuseAsset(const uint32_t id);
+const SQUE_Asset AssetManager_GetData(const uint32_t id);
+const SQUE_Asset AssetManager_GetMetaData(const uint32_t id);
 
+void AssetManager_HandleDropFile(const char* location);
+
+void AssetManager_Update();
+
+template<class T>
+const T* AssetManager_GetDataPack(const uint32_t id)
+{
+    const Asset* asset = AssetManager_Get(id);
+    return T * (asset->datapack);
+}
 
 #endif

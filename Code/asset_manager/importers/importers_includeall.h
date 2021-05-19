@@ -34,6 +34,7 @@ uint32_t GetFileType(const char* path)
     /*include more extensions as seem fit*/
 
     const char* ext = strrchr(path, '.');
+    if (ext == NULL) return FT_UNKNOWN;
     if (strcmp(ext, ".meta") == 0)
         return FT_META;
     else if (strstr(ext, ".sq") != NULL)

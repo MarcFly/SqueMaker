@@ -15,7 +15,7 @@ class SQUE_AssetWindow : public SQUE_UI_Item
 {
 	SQUE_AssetWindow_Messager msgr;
 	uint32_t current_folder = UINT32_MAX;
-	int selectable_size = 60;
+	int selectable_size = 120;
 	uint32_t selected_asset = UINT32_MAX;
 	void MenuBar(float dt);
 

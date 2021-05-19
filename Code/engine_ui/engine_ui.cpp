@@ -157,6 +157,7 @@ void EngineUI_SetFonts()
 #include <engine_ui/ecs_ui/e_inspector.h>
 #include <engine_ui/render_window/render_window.h>
 #include <engine_ui/render_window/render_graph.h>
+#include <engine_ui/assets_window/asset_window.h>
 
 static ImGuiDockNodeFlags base_dockflags = ImGuiDockNodeFlags_NoWindowMenuButton;
 // TODO: Convert to XMacro (enum of the types...)
@@ -165,6 +166,7 @@ static SQUE_Hierarchy hier;
 static SQUE_MenuBar menu_bar;
 static SQUE_RenderWindow render_window;
 static SQUE_RenderGraph render_graph;
+static SQUE_AssetWindow asset_window;
 static sque_vec<SQUE_Messager*> messagers;
 
 void EngineUI_Init()
@@ -190,9 +192,11 @@ void EngineUI_Init()
     hier.Init();
     inspector.Init();
     hier.SetInspector(&inspector);
-
+    
     render_window.Init();
     render_graph.Init();
+
+    asset_window.Init();
 
     // MenuBar Default starts
     menu_bar.Init();

@@ -47,6 +47,7 @@ typedef struct Asset
     uint32_t id = -1;
     char name[64] = "";
     char location[512] = "";
+    uint32_t dir_id = UINT32_MAX;
     uint32_t type = -1; //?
 
 // Runtime Updates
@@ -72,6 +73,9 @@ const SQUE_Asset AssetManager_GetData(const uint32_t id);
 const SQUE_Asset AssetManager_GetMetaData(const uint32_t id);
 
 void AssetManager_HandleDropFile(const char* location);
+
+const sque_vec<SQUE_Dir*>& AssetManager_GetBaseDirs();
+sque_vec<Asset*> AssetManger_GetAssetsDir(const uint32_t dir_id);
 
 void AssetManager_Update();
 

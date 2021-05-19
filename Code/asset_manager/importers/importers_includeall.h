@@ -16,7 +16,9 @@ static const ImportFileFun* test = [](const Asset* a) {
         ENTRY(FT_CUSTOM, test) \
         ENTRY(FT_IMAGE, test) \
         ENTRY(FT_OBJECT, test) \
-        ENTRY(FT_MATERIAL, test) //\
+        ENTRY(FT_MATERIAL, test) \
+        ENTRY(FT_VERT_SHADER, test) \
+        ENTRY(FT_FRAG_SHADER, test) //\
 
 enum FileType
 {
@@ -29,15 +31,21 @@ sque_dyn_arr<ImportFileFun*> import_funs = {FILE_IMPORTER_TABLE(EXPAND_AS_VALUE)
 // This feels bad but I don't know how to deal with it in any other way.
 uint32_t GetFileType(const char* path)
 {
+    /*include more extensions as seem fit*/
+
     const char* ext = strrchr(path, '.');
     if (strcmp(ext, ".meta") == 0)
         return FT_META;
     else if (strstr(ext, ".sq") != NULL)
         return FT_CUSTOM;
-    else if (strcmp(ext, ".png") == 0 || strcmp(ext, ".jpg") == 0 || strcmp(ext, ".jpeg") == 0/*include more extensions as seem fit*/)
+    else if (strcmp(ext, ".png") == 0 || strcmp(ext, ".jpg") == 0 || strcmp(ext, ".jpeg") == 0)
         return FT_IMAGE;
     else if (strcmp(ext, ".gltf") == 0 || strcmp(ext, ".obj") == 0 || strcmp(ext, ".fbx") == 0)
         return FT_OBJECT;
+    else if (strcmp(ext, ".vert") == 0 || strcmp(ext, ".vs") == 0)
+        return FT_VERT_SHADER;
+    else if (strcmp(ext, ".frag") == 0 || strcmp(ext, ".fs") == 0)
+        return FT_FRAG_SHADER;
 
     return FT_UNKNOWN;
 }

@@ -43,16 +43,18 @@ void SQUE_AssetWindow::MenuBar(float dt)
 {
 	static ImVec2 button_size(40, 40);
 
-	if (ImGui::Button(ICON_FK_REFRESH, button_size)); // Look for changes in disk
+	if (ImGui::Button(ICON_FK_REFRESH, button_size)) AssetManager_RefreshDirRecursive(current_folder); // Look for changes in disk
 	ImGui::SameLine();
 
-	// Search...
+	// Item Sizes
 	ImVec2 cursor_pos = ImGui::GetCursorPos();
 	ImVec2 winsize = ImGui::GetWindowSize();
 	ImGui::SetCursorPosX(winsize.x - button_size.x * 1.5 - 3 * button_size.x * 2);
 	ImGui::PushItemWidth(button_size.x * 3);
-	ImGui::SliderFloat("##SelectableSize", &selectable_size, 120, ImGui::GetWindowSize().x / 4.f, "");
+	ImGui::SliderFloat("##SelectableSize", &selectable_size, min_selectable_size, ImGui::GetWindowSize().x / 4.f, "");
 	ImGui::PopItemWidth();
+
+	// Search
 	ImGui::SameLine();
 	ImGui::SetCursorPosX(winsize.x - button_size.x * 1.5 - 3 * button_size.x);
 	static char search[64];
@@ -85,20 +87,19 @@ void SQUE_AssetWindow::UpdateDirectory(const SQUE_Dir* dir)
 	// openflag clear
 }
 
-void SQUE_AssetWindow::DrawSelectableItem(const uint32_t id, const uint32_t type, const char* asset_name, ImVec2 cursor, const float last_font_scale)
+void SQUE_AssetWindow::DrawSelectableItem(const uint32_t id, const uint32_t type, const char* asset_name, const float last_font_scale)
 {
+	const ImVec2 initial_cursor = ImGui::GetCursorPos();
+	ImVec2 cursor = initial_cursor;
+
 	bool selected = (selected_asset == id);
 	char temp_id[32];
-	ImVec2 s_vec(selectable_size, selectable_size);
-	sprintf(temp_id, "##selectable%u", id);
-	ImGui::Selectable(temp_id, &selected, NULL, s_vec);
-
-	float fs_a = ImGui::GetFontSize();
-	cursor.x += margin *3.f;
-	cursor.y += margin;
+	ImVec2 s_vec(selectable_size, selectable_size+margin*2.f);
+	
+	cursor.x += margin * 3.5f;
 	ImGui::SetCursorPos(cursor);
 	sprintf(temp_id, "##child%u", id);
-	ImGui::BeginChild(temp_id, ImVec2(s_vec.x,  s_vec.y - margin*2.f), false, ImGuiWindowFlags_NoInputs | ImGuiWindowFlags_NoScrollbar);
+	ImGui::BeginChild(temp_id, ImVec2(s_vec.x,  2.f*s_vec.y/3.f), false, ImGuiWindowFlags_NoInputs | ImGuiWindowFlags_NoScrollbar);
 	{
 		double fs_b = ImGui::GetFontSize();
 		const float prev_fs = ImGui::GetIO().FontGlobalScale;
@@ -109,23 +110,103 @@ void SQUE_AssetWindow::DrawSelectableItem(const uint32_t id, const uint32_t type
 	}
 	ImGui::EndChild();
 
-	ImGui::PushItemWidth(s_vec.x - margin * 2.f);
-	cursor.x -= margin;
-	cursor.y += s_vec.y - ImGui::GetFontSize() - margin * 3.f;
+	cursor.x = initial_cursor.x;
+	cursor.y += margin/2.f + 2.f * s_vec.y / 3.f;// ImGui::GetCursorPos().y;
 	ImGui::SetCursorPos(cursor);
-	ImGui::LabelText("##", asset_name);
-	ImGui::PopItemWidth();
-}
 
-static inline void SelectableNextCursor(ImVec2& cursor, float selectable_size, float win_width, float initial_x)
-{
-	cursor.x += selectable_size;
-	if (cursor.x > (win_width - (selectable_size / 2.f)))
+	
+	ImGui::PushTextWrapPos(cursor.x + selectable_size);
+	// This is atrocious, but it makes it a bit better to look at...
+	int32_t str_len = strlen(asset_name);
+	if (selected_asset != id && str_len > 9)
 	{
-		cursor.x = initial_x;
-		cursor.y += selectable_size;
+		static char cut_str[10] = ".........";
+		memcpy(cut_str, asset_name, sizeof(cut_str) - 4);
+		ImGui::Text(cut_str);
+	}
+	else if(str_len < 20)
+		ImGui::Text(asset_name);
+	else
+	{
+		static char cut_str[20] = "..................";
+		memcpy(cut_str, asset_name, sizeof(cut_str) - 4);
+		ImGui::Text(cut_str);
+	}
+
+	ImGui::PopTextWrapPos();
+	
+	ImGui::SetCursorPos(initial_cursor);
+	sprintf(temp_id, "##selectable%u", id);
+	
+	ImGui::Selectable(temp_id, &selected, NULL, s_vec);
+
+	// I don't know if this is the correct way to set this up
+	// But looks and is simple for any kind of draggable
+	// When dropping, it has to be checked, but feels bad to do so...
+	if (SQUE_ItemDraggable::CheckStartDrag())
+	{
+		selected_asset = id;
+		FileDraggable* file = new FileDraggable();
+		file->file_id = id;
+		EngineUI_StartDraggable(file);
 	}
 }
+
+void SQUE_AssetWindow::UpdateItems(const ImVec2 item_win_size)
+{
+	ImGui::BeginChild("##AssetsInFolder", item_win_size, true);
+	{
+		const float prev_fs = ImGui::GetIO().FontGlobalScale;
+		ImGui::SetWindowFontScale(.8f * selectable_size / min_selectable_size);
+
+		sque_vec<SQUE_CtrlAsset*> folder_assets = AssetManger_GetAssetsDir(current_folder);
+		ImVec2 cursor(ImGui::GetCursorPos());
+		float initial_x = cursor.x;
+
+		margin = (selectable_size / 20.f);
+
+		float fontsize_ratio = (selectable_size * .7f) / ImGui::GetFontSize();
+
+		const ImGuiIO& io = ImGui::GetIO();
+
+		float last_font_scale = io.FontGlobalScale;
+
+		//ImGui::SetWindowFontScale((last_font_scale/1.5f )* (selectable_size / min_selectable_size));
+
+		const SQUE_Dir* curr_dir = AssetManager_GetDir(current_folder);
+		for (uint16_t i = 0; curr_dir != NULL && i < curr_dir->children_ids.size(); ++i)
+		{
+			const SQUE_Dir* child = AssetManager_GetDir(curr_dir->children_ids[i]);
+			DrawSelectableItem(child->id, 1, child->name, last_font_scale);
+			cursor.x += selectable_size + margin * 2.f;
+			if ((cursor.x + (selectable_size)) > (ImGui::GetWindowSize().x))
+			{
+				cursor.x = initial_x;
+			}
+			else ImGui::SameLine();
+			//SelectableNextCursor(cursor, selectable_size, ImGui::GetWindowSize().x, initial_x);
+			//ImGui::SetCursorPos(cursor);
+		}
+
+		for (uint16_t i = 0; i < folder_assets.size(); ++i)
+		{
+			DrawSelectableItem(folder_assets[i]->id, folder_assets[i]->type, folder_assets[i]->name, last_font_scale);
+			cursor.x += selectable_size + margin * 2.f;
+			if ((cursor.x + (selectable_size)) > (ImGui::GetWindowSize().x))
+			{
+				cursor.x = initial_x;
+			}
+			else ImGui::SameLine();
+		}
+
+		ImGui::SetWindowFontScale(prev_fs);
+
+		if (ImGui::IsMouseClicked(SQUE_MOUSE_LEFT) && ImGui::IsWindowHovered())
+			selected_asset = 0;
+	}
+	ImGui::EndChild();
+}
+
 void SQUE_AssetWindow::Update(float dt)
 {
 	for (uint16_t i = 0; i < msgr.inbox.size(); ++i)
@@ -155,44 +236,27 @@ void SQUE_AssetWindow::Update(float dt)
 
 		ImGui::SameLine();
 		child_sizes.x *= 2;
-		ImGui::BeginChild("##AssetsInFolder", child_sizes, true);
-		{
-			sque_vec<SQUE_CtrlAsset*> folder_assets = AssetManger_GetAssetsDir(current_folder);
-			ImVec2 cursor(ImGui::GetCursorPos());
-			float initial_x = cursor.x;
+		UpdateItems(child_sizes);
 
-			margin = (selectable_size / 20.f);
-			
-			float fontsize_ratio = (selectable_size*.7f) / ImGui::GetFontSize();
-			
-			const ImGuiIO& io = ImGui::GetIO();
-			
-			float last_font_scale = io.FontGlobalScale;
-			
-			ImGui::SetWindowFontScale((last_font_scale/1.5f )* (selectable_size / min_selectable_size));
-			
-			const SQUE_Dir* curr_dir = AssetManager_GetDir(current_folder);
-			for (uint16_t i = 0; curr_dir != NULL && i < curr_dir->children_ids.size(); ++i)
-			{
-				const SQUE_Dir* child = AssetManager_GetDir(curr_dir->children_ids[i]);
-				DrawSelectableItem(child->id, 1, child->name, cursor, last_font_scale);
-				SelectableNextCursor(cursor, selectable_size, ImGui::GetWindowSize().x, initial_x);
-				ImGui::SetCursorPos(cursor);
-			}
-
-			for (uint16_t i = 0; i < folder_assets.size(); ++i)
-			{
-				DrawSelectableItem(folder_assets[i]->id, folder_assets[i]->type, folder_assets[i]->name, cursor, last_font_scale);
-				SelectableNextCursor(cursor, selectable_size, ImGui::GetWindowSize().x, initial_x);
-				ImGui::SetCursorPos(cursor);
-			}
-		}
-		ImGui::EndChild();
 		ImGui::SameLine();
 		child_sizes.x = ImGui::GetWindowSize().x - ImGui::GetCursorPosX()-15;
 		ImGui::BeginChild("##AssetPreview", child_sizes, true);
 		{
+			// Preview render???
+			const SQUE_CtrlAsset* asset = AssetManager_GetConstAsset(selected_asset);
+			if (asset != NULL)
+			{
+				// Preview Render Image, could be embedded in the metadata on a fixed texture size...
+				ImGui::TextWrapped("ID: %u", asset->id);
+				ImGui::Text("Name:"); ImGui::SameLine();ImGui::TextWrapped("%s", asset->name);
+				ImGui::Text("Location:"); ImGui::SameLine(); ImGui::TextWrapped("%s", asset->location);
+				ImGui::TextWrapped("Current Users: %i", asset->current_users);
+				ImGui::Text("Last Modification:"); ImGui::SameLine(); ImGui::TextWrapped("%d", asset->last_update);
 
+				ImGui::Separator();
+				// Metadata Info
+				
+			}
 		}
 		ImGui::EndChild();
 	}

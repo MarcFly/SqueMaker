@@ -22,6 +22,17 @@ struct SQUE_UI_Id
     uint16_t pos;
 };
 
+class SQUE_ItemDraggable
+{
+    uint32_t id;
+    uint32_t type;
+public:
+    static bool CheckStartDrag();
+    virtual void SetUp() {};
+    virtual void Receive(SQUE_ItemDraggable* item) {};
+    virtual void CleanUp() {};
+};
+
 class SQUE_RMPopupMenu
 {
     bool rm_was_clicked;
@@ -65,6 +76,8 @@ void EngineUI_RegisterItem(SQUE_UI_Item* item);
 void EngineUI_RegisterMessager(SQUE_Messager* msgr);
 
 void EngineUI_RequireUpdate(bool window_state);
+void EngineUI_StartDraggable(SQUE_ItemDraggable* item);
+SQUE_ItemDraggable* EngineUI_CheckDroppedDraggable();
 void EngineUI_Update(float dt);
 
 void EngineUI_ExecuteAction(SQUE_Executer* action);

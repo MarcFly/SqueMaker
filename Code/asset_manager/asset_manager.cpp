@@ -77,7 +77,7 @@ SQUE_CtrlAsset* AssetManager_Get(const uint32_t id)
 	return NULL;
 }
 
-const SQUE_CtrlAsset* AssetManager_GetConst(const uint32_t id)
+const SQUE_CtrlAsset* AssetManager_GetConstAsset(const uint32_t id)
 {
 	for (uint32_t i = 0; i < assets.size(); ++i)
 		if (id == assets[i].id)
@@ -126,7 +126,7 @@ void AssetManager_UnuseAsset(const uint32_t id)
 
 const SQUE_Asset AssetManager_GetData(const uint32_t id)
 {
-	const SQUE_CtrlAsset* asset = AssetManager_GetConst(id);
+	const SQUE_CtrlAsset* asset = AssetManager_GetConstAsset(id);
 	SQUE_Asset ret;
 	ret.raw_data = (char*)(asset->datapack.data);
 	ret.size = asset->datapack.data_size;
@@ -135,7 +135,7 @@ const SQUE_Asset AssetManager_GetData(const uint32_t id)
 
 const SQUE_Asset AssetManager_GetMetaData(const uint32_t id)
 {
-	const SQUE_CtrlAsset* asset = AssetManager_GetConst(id);
+	const SQUE_CtrlAsset* asset = AssetManager_GetConstAsset(id);
 	SQUE_Asset ret;
 	ret.raw_data = (char*)(asset->datapack.metadata);
 	ret.size = asset->datapack.metadata_size;
@@ -146,7 +146,7 @@ void AssetManager_HandleDropFile(const char* location)
 {
 	uint32_t rel_type = GetFileType(location);
 	uint32_t asset_id = AssetManager_DeclareAsset(SQUE_FS_GetFileName(location), location);
-	const SQUE_CtrlAsset* const_get = AssetManager_GetConst(asset_id);
+	const SQUE_CtrlAsset* const_get = AssetManager_GetConstAsset(asset_id);
 	if(const_get != NULL) import_funs[rel_type](const_get);
 }
 
@@ -176,6 +176,48 @@ sque_vec<SQUE_CtrlAsset*> AssetManger_GetAssetsDir(const uint32_t dir_id)
 	return ret;
 }
 
+static void SetChildDirs(const SQUE_Dir* base_dir, sque_vec<const SQUE_Dir*>* dirs)
+{
+	for (uint32_t i = 0; i < base_dir->children_ids.size(); ++i)
+	{
+		dirs->push_back(AssetManager_GetDir(base_dir->children_ids[i]));
+		SetChildDirs(*dirs->last(), dirs);
+	}
+}
+
+void AssetManager_RefreshDirRecursive(const uint32_t dir_id)
+{
+	sque_vec<SQUE_CtrlAsset*> checked;
+	sque_vec<const SQUE_Dir*> dirs;
+	dirs.push_back(AssetManager_GetDir(dir_id));
+	if (dirs[0] == NULL)
+		return;
+
+	SetChildDirs(*dirs.last(), &dirs);
+
+	for (uint32_t i = 0; i < assets.size(); ++i)
+	{
+		for (uint32_t j = 0; j < dirs.size(); ++j)
+		{
+			if (assets[i].dir_id == dirs[j]->id)
+			{
+				checked.push_back(&assets[i]);
+				break;
+			}
+		}
+	}
+
+	sque_vec<char*> ret = SQUE_FS_CheckDirectoryChanges(dirs[0]->location, checked, NULL);
+	
+	// Handle New Items Immediately
+	char str[512];
+	for (uint32_t i = 0; i < ret.size(); ++i)
+	{
+		AssetManager_DeclareAsset(SQUE_FS_GetFileName(ret[i]), ret[i]);
+		delete ret[i];
+	}	
+}
+
 void AssetManager_Init()
 {
 	SQUE_FS_GenDirectoryStructure(SQUE_FS_GetExecPath(), directories);
@@ -189,17 +231,9 @@ void AssetManager_Update()
 	// Dealing with events for loading and such...
 	// How to react with that type of things...
 	
-	if (test_timer.ReadMilliSec() > 10000)
+	if (test_timer.ReadMilliSec() > 10000 && directories.size() > 0)
 	{
-		sque_vec<SQUE_CtrlAsset*> checked;
-		for (uint32_t i = 0; i < assets.size(); ++i)
-			if (assets[i].dir_id == base_parents[0]->id)
-				checked.push_back(&assets[i]);
-
-		sque_vec<char*> ret = SQUE_FS_CheckDirectoryChanges(base_parents[0]->location, checked, NULL);
-		for (uint32_t i = 0; i < ret.size(); ++i)
-			delete ret[i];
-
+		AssetManager_RefreshDirRecursive(directories[0].id);
 		test_timer.Start();
 	}
 	

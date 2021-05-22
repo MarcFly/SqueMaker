@@ -88,16 +88,21 @@ void EngineUI_DefaultTheme()
     style.Colors[35] = style.Colors[9]; // Active
     style.Colors[36] = style.Colors[7];
     style.Colors[37] = ImVec4(0, 0, 0, 0);
+    // Window Colors
+    style.Colors[ImGuiCol_WindowBg].w = 1.f;
+    style.Colors[ImGuiCol_TitleBg] = ImVec4(0, 52/255.f, 102/255.f, 1);
+    style.Colors[ImGuiCol_TitleBgActive] = ImVec4(96 / 255.f, 46 / 255.f, 1, 1);
     // TODO: Docking... 
     // Plots will go with ImPlot when implemented
     // continue...
 }
+
 void EngineUI_DefaultStyle()
 {
     ImGuiStyle& style = ImGui::GetStyle();
 
     // Main
-
+    
     style.WindowPadding = ImVec2(10, 10);
     style.FramePadding = ImVec2(10, 5);
     style.ItemSpacing = ImVec2(10, 5);
@@ -142,9 +147,11 @@ void EngineUI_SetFonts()
     icons_config.PixelSnapH = true;
 
     std::string ExecPath = SQUE_FS_GetExecPath();
-    io.FontDefault = io.Fonts->AddFontFromFileTTF((ExecPath + "/Assets/fonts/Cousine-Regular.ttf").c_str(), 20);
-    io.Fonts->AddFontFromFileTTF((ExecPath + "/Assets/fonts/forkawesome-webfont.ttf").c_str(), 20, &icons_config, icons_ranges);
-    
+    io.FontDefault = io.Fonts->AddFontFromFileTTF((ExecPath + "/Assets/fonts/Cousine-Regular.ttf").c_str(), 60);
+    io.Fonts->AddFontFromFileTTF((ExecPath + "/Assets/fonts/forkawesome-webfont.ttf").c_str(), 60, &icons_config, icons_ranges);
+    io.Fonts->Fonts[io.Fonts->Fonts.size()-1]->Scale /= 3.f;
+    //io.Fonts->Fonts.end();
+    //ImFont::
     io.Fonts->Build();
 }
 
@@ -252,6 +259,26 @@ void EngineUI_RequireUpdate(bool window_state)
     require_update = require_update || !window_state;
 }
 
+static bool dragging = false;
+static SQUE_ItemDraggable* draggable = NULL;
+
+bool SQUE_ItemDraggable::CheckStartDrag()
+{
+    return ImGui::IsItemHovered() && !dragging && ImGui::IsMouseDown(SQUE_MOUSE_LEFT);
+}
+
+void EngineUI_StartDraggable(SQUE_ItemDraggable* item)
+{
+    draggable = item;
+}
+
+SQUE_ItemDraggable* EngineUI_CheckDroppedDraggable()
+{
+    if (!ImGui::IsMouseDown(SQUE_MOUSE_LEFT) && draggable != NULL)
+        return draggable;
+    return NULL;
+}
+
 void EngineUI_Update(float dt)
 {
     //if(SQUE_DISPLAY_)
@@ -272,6 +299,16 @@ void EngineUI_Update(float dt)
     ImGui::Render();
     ImGui_ImplSqueLib_Render(ImGui::GetDrawData());
     if(require_update) EngineUI_UpdateActives();
+
+    // Things that have draggables should check if a draggable has been dropped over them
+    // How would I do this in another way?
+    if (EngineUI_CheckDroppedDraggable() != NULL)
+    {
+        draggable->CleanUp();
+        delete draggable;
+        draggable = NULL;
+    }
+
     return;
 }
 

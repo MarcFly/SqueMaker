@@ -34,7 +34,7 @@
 void AssetManager_ChangeUnusedTimeUnload(const double time_ms);
 uint32_t AssetManager_DeclareAsset(const char* name, const char* location);
 SQUE_CtrlAsset* AssetManager_Get(const uint32_t id);
-const SQUE_CtrlAsset* AssetManager_GetConst(const uint32_t id);
+const SQUE_CtrlAsset* AssetManager_GetConstAsset(const uint32_t id);
 void AssetManager_UseAsset(const uint32_t id);
 void AssetManager_UnuseAsset(const uint32_t id);
 const SQUE_Asset AssetManager_GetData(const uint32_t id);
@@ -45,6 +45,8 @@ void AssetManager_HandleDropFile(const char* location);
 const sque_vec<SQUE_Dir*>& AssetManager_GetBaseDirs();
 const SQUE_Dir* AssetManager_GetDir(const uint32_t id);
 sque_vec<SQUE_CtrlAsset*> AssetManger_GetAssetsDir(const uint32_t dir_id);
+void AssetManager_RefreshDirRecursive(const uint32_t dir_id);
+
 
 void AssetManager_Init();
 void AssetManager_Update();

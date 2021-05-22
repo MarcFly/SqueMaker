@@ -29,44 +29,12 @@
     - All assets have to be symbolized - aka loaded with its properties but not the actual data until used
 */
 
-typedef struct DataPack
-{
-    void* data;
-    uint64_t data_size;
-    void* metadata;
-    uint64_t metadata_size;
-};
 
-typedef void(ReadWriteAssetFun)(const char* location, DataPack* datapack);
-typedef void(UnloadAssetFun)();
-
-
-typedef struct Asset
-{
-// Static Data - Generated or Loaded
-    uint32_t id = -1;
-    char name[64] = "";
-    char location[512] = "";
-    uint32_t dir_id = UINT32_MAX;
-    uint32_t type = -1; //?
-
-// Runtime Updates
-    SQUE_Timer unused_timer;
-    uint32_t current_users = 0;
-
-// Type Based functions  
-    ReadWriteAssetFun* Save;
-    ReadWriteAssetFun* Load;
-    UnloadAssetFun* Unload;
-
-// Actual Data
-    DataPack datapack;
-};
 
 void AssetManager_ChangeUnusedTimeUnload(const double time_ms);
 uint32_t AssetManager_DeclareAsset(const char* name, const char* location);
-Asset* AssetManager_Get(const uint32_t id);
-const Asset* AssetManager_GetConst(const uint32_t id);
+SQUE_CtrlAsset* AssetManager_Get(const uint32_t id);
+const SQUE_CtrlAsset* AssetManager_GetConst(const uint32_t id);
 void AssetManager_UseAsset(const uint32_t id);
 void AssetManager_UnuseAsset(const uint32_t id);
 const SQUE_Asset AssetManager_GetData(const uint32_t id);
@@ -75,8 +43,10 @@ const SQUE_Asset AssetManager_GetMetaData(const uint32_t id);
 void AssetManager_HandleDropFile(const char* location);
 
 const sque_vec<SQUE_Dir*>& AssetManager_GetBaseDirs();
-sque_vec<Asset*> AssetManger_GetAssetsDir(const uint32_t dir_id);
+const SQUE_Dir* AssetManager_GetDir(const uint32_t id);
+sque_vec<SQUE_CtrlAsset*> AssetManger_GetAssetsDir(const uint32_t dir_id);
 
+void AssetManager_Init();
 void AssetManager_Update();
 
 template<class T>

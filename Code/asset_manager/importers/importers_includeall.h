@@ -5,13 +5,14 @@
 #include <squelib.h>
 #include <asset_manager/asset_manager.h>
 
-typedef void(ImportFileFun)(const Asset* asset);
-static const ImportFileFun* test = [](const Asset* a) {
+typedef void(ImportFileFun)(const SQUE_CtrlAsset* asset);
+static const ImportFileFun* test = [](const SQUE_CtrlAsset* a) {
     SQUE_PRINT(LT_INFO, "Tried importing: %s from %s", a->name, a->location); };
 
 // Will have to be changed into a X3 macro (import and export)
 #define FILE_IMPORTER_TABLE(ENTRY) \
         ENTRY(FT_UNKNOWN, test) \
+        ENTRY(FT_FOLDER, test) \
         ENTRY(FT_META, test) \
         ENTRY(FT_CUSTOM, test) \
         ENTRY(FT_IMAGE, test) \
@@ -34,7 +35,7 @@ uint32_t GetFileType(const char* path)
     /*include more extensions as seem fit*/
 
     const char* ext = strrchr(path, '.');
-    if (ext == NULL) return FT_UNKNOWN;
+    if (ext == NULL) return FT_FOLDER;
     if (strcmp(ext, ".meta") == 0)
         return FT_META;
     else if (strstr(ext, ".sq") != NULL)

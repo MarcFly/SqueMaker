@@ -14,6 +14,8 @@ int main(int argc, char** argv)
     // Init Modules
     Render_Init();
     EngineUI_Init();
+    AssetManager_Init();
+
     SQUE_CHECK_RENDER_ERRORS();
 
     // Update Loop

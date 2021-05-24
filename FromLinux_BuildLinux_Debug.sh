@@ -1,5 +1,5 @@
 #!/bin/bash
-
+cd ../
 mkdir cmake_bloat_tolinux
 cd cmake_bloat_tolinux
 

@@ -28,6 +28,9 @@ class SQUE_AssetWindow : public SQUE_UI_Item
 	float margin = 0;
 	float font_multiplier = .75f;
 
+	char search[64];
+	bool selectable_case_sensitive = true;
+	bool SearchConstraints(const char* check);
 	void MenuBar(float dt);
 	void UpdateDirectory(const SQUE_Dir* dir);
 	void DrawSelectableItem(const uint32_t id, const uint32_t type, const char* asset_name, const float last_font_scale);

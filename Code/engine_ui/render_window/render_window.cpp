@@ -33,7 +33,7 @@ void SQUE_RenderWindow::Update(float dt)
             for (uint16_t i = 0; i < steps.size(); ++i)
             {
                 is_selected = (i == render_step_ref);
-                sprintf_s(selectable_name, "%s##%u", steps[i]->name, i);
+                sprintf(selectable_name, "%s##%u", steps[i]->name, i);
                 if (ImGui::Selectable(selectable_name, &is_selected))
                 {
                     render_step_ref = i;

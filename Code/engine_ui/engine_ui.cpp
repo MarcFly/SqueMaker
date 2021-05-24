@@ -212,6 +212,7 @@ void EngineUI_Init()
     menu_bar.RegisterMenuItem(inspector.name, "View", &inspector.active);
     menu_bar.RegisterMenuItem(render_window.name, "View", &render_window.active);
     menu_bar.RegisterMenuItem(render_graph.name, "View", &render_graph.active);
+    menu_bar.RegisterMenuItem(asset_window.name, "View", &asset_window.active);
     //io.ConfigWindowsResizeFromEdges = true; // ImguiBackend Has Mouse Cursor
 
     for (uint16_t i = 0; i < messagers.size(); ++i)

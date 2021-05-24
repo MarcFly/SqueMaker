@@ -57,12 +57,37 @@ void SQUE_AssetWindow::MenuBar(float dt)
 	// Search
 	ImGui::SameLine();
 	ImGui::SetCursorPosX(winsize.x - button_size.x * 1.5 - 3 * button_size.x);
-	static char search[64];
 	ImGui::PushItemWidth(button_size.x * 3);
-	ImGui::InputText("##AssetWindowSearchBar", search, sizeof(search));
+    ImGui::InputTextWithHint("##AssetWindowSearchBar", (search[0]!='\0') ? search : ICON_FK_SEARCH, search, sizeof(search));
+
 	ImGui::PopItemWidth();
 	ImGui::SameLine();
-	if (ImGui::Button(ICON_FK_SEARCH));
+	ImGui::Selectable("Aa##CaseSensitive", &selectable_case_sensitive);
+}
+
+bool SQUE_AssetWindow::SearchConstraints(const char* check)
+{
+	if(search[0] == '\0')
+		return true;
+	if(selectable_case_sensitive)
+		return strstr(check, search) != NULL;
+	else
+	{
+		static char str1[64];
+		static char str2[64];
+		static uint16_t s1;
+		static uint16_t s2;
+		s1 = strlen(check);
+		s2 = strlen(search);
+		for(uint16_t i = 0; i<s1; ++i)
+			str1[i] = tolower(check[i]);
+		str1[s1] = '\0';
+		for(uint16_t i = 0; i<s2; ++i)
+			str2[i] = tolower(search[i]);
+		str2[s2] = '\0';
+		return strstr(str1, str2) != NULL;
+		
+	}
 }
 
 void SQUE_AssetWindow::UpdateDirectory(const SQUE_Dir* dir)
@@ -177,6 +202,9 @@ void SQUE_AssetWindow::UpdateItems(const ImVec2 item_win_size)
 		for (uint16_t i = 0; curr_dir != NULL && i < curr_dir->children_ids.size(); ++i)
 		{
 			const SQUE_Dir* child = AssetManager_GetDir(curr_dir->children_ids[i]);
+			if(!SearchConstraints(child->name))
+				continue;
+
 			DrawSelectableItem(child->id, 1, child->name, last_font_scale);
 			cursor.x += selectable_size + margin * 2.f;
 			if ((cursor.x + (selectable_size)) > (ImGui::GetWindowSize().x))
@@ -184,12 +212,13 @@ void SQUE_AssetWindow::UpdateItems(const ImVec2 item_win_size)
 				cursor.x = initial_x;
 			}
 			else ImGui::SameLine();
-			//SelectableNextCursor(cursor, selectable_size, ImGui::GetWindowSize().x, initial_x);
-			//ImGui::SetCursorPos(cursor);
 		}
 
 		for (uint16_t i = 0; i < folder_assets.size(); ++i)
 		{
+			if(!SearchConstraints(folder_assets[i]->name))
+				continue;
+
 			DrawSelectableItem(folder_assets[i]->id, folder_assets[i]->type, folder_assets[i]->name, last_font_scale);
 			cursor.x += selectable_size + margin * 2.f;
 			if ((cursor.x + (selectable_size)) > (ImGui::GetWindowSize().x))

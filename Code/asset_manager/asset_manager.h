@@ -54,8 +54,8 @@ void AssetManager_Update();
 template<class T>
 const T* AssetManager_GetDataPack(const uint32_t id)
 {
-    const Asset* asset = AssetManager_Get(id);
-    return T * (asset->datapack);
+    const SQUE_CtrlAsset* asset = AssetManager_Get(id);
+    return (T*)(asset->datapack);
 }
 
 #endif

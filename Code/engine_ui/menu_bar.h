@@ -12,7 +12,7 @@ struct SQUE_MenuItem
     const char* name;
     sque_vec<uint32_t> sub_items;
     const char* shortcut;
-    VoidFun cb = [](){};
+    VoidFun* cb = [](){};
     // Callback? Executer? Executer that is added by itself if needed?
     // Should be a void fun callback probably.
 };

@@ -27,6 +27,14 @@ set(imnodes_src
     ${imnodes_include}/imnodes.cpp
 )
 
+# TinyGLTF - GLTF/Json/Texture loader
+set(tinygltf_include ${CMAKE_CURRENT_SOURCE_DIR}/external/tinygltf)
+set(tinygltf_src
+    ${tinygltf_include}/json.hpp
+    ${tinygltf_include}/stb_image.h
+    ${tinygltf_include}/stb_image_write.h
+    ${tinygltf_include}/tiny_gltf.h)
+
 #------------------------------------------------------------------------------------------------
 # SETUP CURRENT PROJECT
 #------------------------------------------------------------------------------------------------
@@ -50,31 +58,20 @@ set(CMAKE_BINARY_DIR ${CMAKE_CURRENT_SOURCE_DIR}/builds)
 # Get all code
 file(GLOB_RECURSE SqueMaker_src  ${CMAKE_CURRENT_SOURCE_DIR}/Code/*.cpp)
 file(GLOB_RECURSE SqueMaker_head ${CMAKE_CURRENT_SOURCE_DIR}/Code/*.h)
-SqueLib_PrepareBuild(SqueMaker MarcTorresJimenez "${SqueMaker_src};${SqueMaker_inc}")
+SqueLib_PrepareBuild(SqueMaker MarcTorresJimenez "${SqueMaker_src};${SqueMaker_head}" "${CMAKE_CURRENT_SOURCE_DIR}/Code")
 SqueLib_Package(${CMAKE_CURRENT_SOURCE_DIR}/Assets "")
 
 #------------------------------------------------------------------------------------------------
 # SETTING FINAL PROPERTIES FOR THE PROJECT
 #------------------------------------------------------------------------------------------------
-target_compile_options(SqueLib BEFORE PUBLIC -fpermissive)
-set_target_properties(SqueMaker
-    PROPERTIES 
-        ARCHIVE_OUTPUT_DIRECTORY "${SqueLib_Output}/archive"
-        LIBRARY_OUTPUT_DIRECTORY "${SqueLib_Output}"
-        RUNTIME_OUTPUT_DIRECTORY "${SqueLib_Output}"
-)
-# INCLUDE AND LINK TO SQUELIB
-target_link_libraries(SqueMaker 
-    PUBLIC 
-        SqueLib)
-
 target_include_directories(SqueMaker 
-    PUBLIC 
+    PUBLIC
         ${CMAKE_CURRENT_SOURCE_DIR}/Code
         ${SqueLib_include}
         ${imgui_sque_include}
         ${imgui_include}
         ${imnodes_include}
+        ${tinyglf_include}
 )
 
 
@@ -82,6 +79,7 @@ target_sources(SqueMaker PUBLIC
     "${imgui_src}"
     "${SqueMaker_head}"
     "${imnodes_src}"
+    "${tinygltf_src}"
 )
 
 # Group Sources as Intended
@@ -90,3 +88,4 @@ source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}/Code"
     FILES ${SqueMaker_src} ${SqueMaker_head}
 )
 source_group(libs/imgui FILES ${imgui_src})
+source_group(libs/tinygltf FILES ${tinygltf_src})

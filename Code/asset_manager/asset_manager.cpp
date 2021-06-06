@@ -92,10 +92,10 @@ void AssetManager_LoadAssetDisk(SQUE_CtrlAsset* asset)
 	sprintf(meta_location, "%s.meta", asset->location);
 	SQUE_Asset* load_meta = SQUE_FS_LoadAssetRaw(meta_location);
 
-	asset->datapack.data = load->raw_data;
-	asset->datapack.data_size = load->size;
-	asset->datapack.metadata = load_meta->raw_data;
-	asset->datapack.metadata_size = load_meta->size;
+	asset->datapack.data.raw_data= load->raw_data;
+	asset->datapack.data.size = load->size;
+	asset->datapack.metadata.raw_data = load_meta->raw_data;
+	asset->datapack.metadata.size = load_meta->size;
 }
 
 void AssetManager_UseAsset(const uint32_t id)
@@ -128,8 +128,8 @@ const SQUE_Asset AssetManager_GetData(const uint32_t id)
 {
 	const SQUE_CtrlAsset* asset = AssetManager_GetConstAsset(id);
 	SQUE_Asset ret;
-	ret.raw_data = (char*)(asset->datapack.data);
-	ret.size = asset->datapack.data_size;
+	ret.raw_data = (char*)(asset->datapack.data.raw_data);
+	ret.size = asset->datapack.data.size;
 	return ret;
 }
 
@@ -137,8 +137,8 @@ const SQUE_Asset AssetManager_GetMetaData(const uint32_t id)
 {
 	const SQUE_CtrlAsset* asset = AssetManager_GetConstAsset(id);
 	SQUE_Asset ret;
-	ret.raw_data = (char*)(asset->datapack.metadata);
-	ret.size = asset->datapack.metadata_size;
+	ret.raw_data = (char*)(asset->datapack.metadata.raw_data);
+	ret.size = asset->datapack.metadata.size;
 	return ret;
 }
 
@@ -207,20 +207,25 @@ void AssetManager_RefreshDirRecursive(const uint32_t dir_id)
 		}
 	}
 
-	sque_vec<char*> ret = SQUE_FS_CheckDirectoryChanges(dirs[0]->location, checked, NULL);
+	sque_vec<SQUE_FW_NewAsset*> ret = SQUE_FS_CheckDirectoryChanges(dirs[0]->location, checked, NULL);
 	
 	// Handle New Items Immediately
 	char str[512];
 	for (uint32_t i = 0; i < ret.size(); ++i)
 	{
-		AssetManager_DeclareAsset(SQUE_FS_GetFileName(ret[i]), ret[i]);
+		uint32_t t_id = AssetManager_DeclareAsset(SQUE_FS_GetFileName(ret[i]->str), ret[i]->str);
+		if (t_id != UINT32_MAX)
+		{
+			SQUE_CtrlAsset* t = (SQUE_CtrlAsset*)AssetManager_GetConstAsset(t_id);
+			t->last_update = ret[i]->last_update;
+		}
 		delete ret[i];
-	}	
+	}
 }
 
 void AssetManager_Init()
 {
-	SQUE_FS_GenDirectoryStructure(SQUE_FS_GetExecPath(), directories);
+	SQUE_FS_GenDirectoryStructure(SQUE_FS_GetExecPath(), &directories);
 	base_parents.push_back(directories.begin());
 }
 

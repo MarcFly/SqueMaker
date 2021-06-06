@@ -4,6 +4,7 @@
 #include <cstring>
 #include <squelib.h>
 #include <asset_manager/asset_manager.h>
+#include <asset_manager/importers/import_mesh.h>
 
 typedef void(ImportFileFun)(const SQUE_CtrlAsset* asset);
 static const ImportFileFun* test = [](const SQUE_CtrlAsset* a) {
@@ -16,7 +17,7 @@ static const ImportFileFun* test = [](const SQUE_CtrlAsset* a) {
         ENTRY(FT_META, test) \
         ENTRY(FT_CUSTOM, test) \
         ENTRY(FT_IMAGE, test) \
-        ENTRY(FT_OBJECT, test) \
+        ENTRY(FT_OBJECT, AssetManager_ImportMesh) \
         ENTRY(FT_MATERIAL, test) \
         ENTRY(FT_VERT_SHADER, test) \
         ENTRY(FT_FRAG_SHADER, test) //\

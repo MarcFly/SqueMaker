@@ -222,11 +222,26 @@ void AssetManager_RefreshDirRecursive(const uint32_t dir_id)
 		delete ret[i];
 	}
 }
+#define _CRT_SECURE_NO_WARNINGS
+#include <cstdio>
 
 void AssetManager_Init()
 {
-	SQUE_FS_GenDirectoryStructure(SQUE_FS_GetExecPath(), &directories);
+	const char* exec_path = SQUE_FS_GetExecPath();
+	int len = strlen(exec_path);
+	char* assets = new char[len+16];
+	char* resources = new char[len+16];
+	sprintf(assets, "%s%cAssets", exec_path, FOLDER_ENDING);
+	sprintf(resources, "%s%cResources",exec_path, FOLDER_ENDING);
+
+	SQUE_FS_GenDirectoryStructure(assets, &directories);
 	base_parents.push_back(directories.begin());
+	int last = directories.size();
+	SQUE_FS_GenDirectoryStructure(resources, &directories);
+	base_parents.push_back(&directories[last]);
+	
+	delete[] assets;
+	delete[] resources;
 }
 
 static SQUE_Timer test_timer;

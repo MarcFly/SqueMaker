@@ -28,8 +28,9 @@ void AssetManager_ImportMesh(const SQUE_CtrlAsset* asset)
 		loader.LoadBinaryFromMemory(&model, &err, &warn, (uchar*)temp->raw_data, temp->size);
 
 	// Assume every gltf/glb/... file will generate a scene
-	// Thus a scene type hierarchy should be generated
-	// As well as every individual item
+	// Thus a "Prefab" should be generated per mesh, skeletons, anims,... included
+	// Then a "Scene" with Prefabs with the supposed transformations
+	
 	// If a Mesh* has a skeleton, or a skeleton refers to a base mesh, 
 	// that mesh should generate just a single object -> sub items are meshes with "slot" components
 

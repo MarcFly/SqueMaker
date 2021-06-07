@@ -92,7 +92,7 @@ bool SQUE_AssetWindow::SearchConstraints(const char* check)
 
 void SQUE_AssetWindow::UpdateDirectory(const SQUE_Dir* dir)
 {
-	ImGuiTreeNodeFlags tmp_flags = NULL | (dir->children_ids.size() == 0) * ImGuiTreeNodeFlags_Leaf | (current_folder == dir->id);
+	ImGuiTreeNodeFlags tmp_flags = NULL | ImGuiTreeNodeFlags_OpenOnArrow | (dir->children_ids.size() == 0) * ImGuiTreeNodeFlags_Leaf | (current_folder == dir->id);
 
 	bool open = ImGui::TreeNodeEx(&dir->id, tmp_flags, dir->name);
 	if (ImGui::IsItemClicked())

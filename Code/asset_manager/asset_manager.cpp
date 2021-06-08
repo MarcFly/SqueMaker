@@ -11,6 +11,18 @@ void AssetManager_ChangeUnusedTimeUnload(const double time_ms)
 	unused_time_unload_ms = time_ms;
 }
 
+uint32_t AssetManager_ExistsAsset(const char* name, const char* location)
+{
+	for (uint32_t i = 0; i < assets.size(); ++i)
+	{
+		int16_t cmp1 = strcmp(assets[i].name, name);
+		int16_t cmp2 = strcmp(assets[i].location, location);
+		if (cmp1 == NULL && cmp1 == cmp2)
+			return assets[i].id;
+	}
+	return UINT32_MAX;
+}
+
 uint32_t AssetManager_DeclareAsset(const char* name, const char* location)
 {
 	SQUE_CtrlAsset new_asset;
@@ -20,13 +32,9 @@ uint32_t AssetManager_DeclareAsset(const char* name, const char* location)
 	memcpy(new_asset.location, location, strlen(location));
 	new_asset.type = GetFileType(location);
 	if (new_asset.type == FT_FOLDER) return -1;
-	for (uint32_t i = 0; i < assets.size(); ++i)
-	{
-		int16_t cmp1 = strcmp(assets[i].name, new_asset.name);
-		int16_t cmp2 = strcmp(assets[i].location, new_asset.location);
-		if (cmp1 == NULL && cmp1 == cmp2)
-			return assets[i].id;
-	}
+	uint32_t exists = AssetManager_ExistsAsset(name, location);
+	if (exists != UINT32_MAX)
+		return exists;
 
 	// TODO: String Hash and custom implementation of a map...
 	std::string location_str(location);
@@ -225,10 +233,28 @@ void AssetManager_RefreshDirRecursive(const uint32_t dir_id)
 #define _CRT_SECURE_NO_WARNINGS
 #include <cstdio>
 
+static char tmp_meshes[256];
+static char tmp_textures[256];
+
+const char* AssetManager_GetDefaultDir_Meshes()
+{
+	return tmp_meshes;
+}
+
 void AssetManager_Init()
 {
 	const char* exec_path = SQUE_FS_GetExecPath();
 	int len = strlen(exec_path);
+
+	// Generates the base folders if not existing
+	sprintf(tmp_meshes, "%s%cAssets%ctmp_folders%cmeshes", exec_path, FE, FE, FE);
+	sprintf(tmp_textures, "%s%cAssets%ctmp_folders%ctextures", exec_path, FE, FE, FE);
+	SQUE_FS_CreateDirFullPath(tmp_meshes);
+	SQUE_FS_CreateDirFullPath(tmp_textures);
+	//SQUE_FS_CreateDirRelative(tmp_meshes);
+	//SQUE_FS_CreateDirRelative(tmp_textures);
+
+	// Generate directory structures for assets and resources
 	char* assets = new char[len+16];
 	char* resources = new char[len+16];
 	sprintf(assets, "%s%cAssets", exec_path, FOLDER_ENDING);
@@ -239,7 +265,7 @@ void AssetManager_Init()
 	int last = directories.size();
 	SQUE_FS_GenDirectoryStructure(resources, &directories);
 	base_parents.push_back(&directories[last]);
-	
+
 	delete[] assets;
 	delete[] resources;
 }
@@ -260,11 +286,20 @@ void AssetManager_Update()
 	for (uint32_t i = 0; i < assets.size(); ++i)
 	{
 		bool unload_time = assets[i].unused_timer.IsActive() && assets[i].unused_timer.ReadMilliSec() > unused_time_unload_ms;
-		bool unload_delete = assets[i].status == 2;
-		if (unload_time || unload_delete)
+		bool unload_delete = CHK_FLAG(assets[i].status_flags, SQ_AS_DELETED);
+		if (unload_time && CHK_FLAG(assets[i].status_flags, SQ_AS_LOADED))
 		{
 			assets[i].Unload(&assets[i].datapack);
+			CLR_FLAG(assets[i].status_flags, SQ_AS_LOADED);
+			// Load and Unload of a datapack does not give power over ctrl_asset
+			// Thus Engine has to set the flags... better than relying on user?
 			assets[i].unused_timer.Kill();
+		}
+		if (CHK_FLAG(assets[i].status_flags, SQ_AS_DELETED) && !CHK_FLAG(assets[i].status_flags,SQ_AS_LOADED))
+		{
+			// If the Asset is not loaded, it will be deleted directly
+			SQUE_Swap(&assets[i], assets.last());
+			assets.pop_back();
 		}
 	}
 

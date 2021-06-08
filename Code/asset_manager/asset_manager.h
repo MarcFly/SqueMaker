@@ -32,6 +32,7 @@
 
 
 void AssetManager_ChangeUnusedTimeUnload(const double time_ms);
+uint32_t AssetManager_ExistsAsset(const char* name, const char* location);
 uint32_t AssetManager_DeclareAsset(const char* name, const char* location);
 SQUE_CtrlAsset* AssetManager_Get(const uint32_t id);
 const SQUE_CtrlAsset* AssetManager_GetConstAsset(const uint32_t id);
@@ -50,6 +51,9 @@ void AssetManager_RefreshDirRecursive(const uint32_t dir_id);
 
 void AssetManager_Init();
 void AssetManager_Update();
+
+const char* AssetManager_GetDefaultDir_Meshes();
+const char* AssetManager_GetDefaultDir_Tetxures();
 
 template<class T>
 const T* AssetManager_GetDataPack(const uint32_t id)

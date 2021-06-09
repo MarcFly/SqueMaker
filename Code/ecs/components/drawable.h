@@ -10,9 +10,9 @@ class SQUE_Drawable : public SQUE_Component
 public:
 
 // Required for all components
-    static SQUE_Component Create();
-    static SQUE_Component Create(const SQUE_Drawable& copy);
-    static SQUE_Component Create(const SQUE_Component* copy);
+    static SQUE_Component Create(const uint32_t _e_id = UINT32_MAX );
+    static SQUE_Component Create(const SQUE_Drawable& copy, const uint32_t _e_id = UINT32_MAX);
+    static SQUE_Component Create(const SQUE_Component* copy, const uint32_t _e_id = UINT32_MAX);
     static SQUE_Drawable& Get(uint32_t id);
     static SQUE_Component* GetGenericP(const uint32_t id);
     static SQUE_Component* AllocateCopy(const uint32_t id);
@@ -25,14 +25,13 @@ public:
     ~SQUE_Drawable();
 
     glm::mat4x4 worldMatrix;
-    SQUE_Mesh draw_data;
-    uint32_t material_refs[5];
+    uint32_t mesh_id;
+
 
     // Copy For the data, ID is copied only if when required like in UI
     SQUE_Drawable& operator=(const SQUE_Drawable& copy)
     {
-        draw_data = copy.draw_data;
-        memcpy(material_refs, copy.material_refs, sizeof(material_refs));
+        mesh_id = copy.mesh_id;
         worldMatrix = copy.worldMatrix;
         return *this;
     }

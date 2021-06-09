@@ -1,4 +1,6 @@
 #include "render_graph.h"
+#include "../assets_window/asset_window.h"
+#include "../engine_ui.h"
 
 void SQUE_RenderGraph_Messager::RegisterSubscriber()
 {
@@ -25,16 +27,6 @@ void SQUE_RenderGraph::Init()
 	rm_menu.container_name = name;
 	rm_menu.flags = ImGuiHoveredFlags_RootAndChildWindows;
 	EngineUI_RegisterMessager(&msgr);
-
-	// Set all colors.... have an editor and a way to save them too
-	title_color[RENDER_VALUE_VERTEX] = ImVec4(0,.5,0,1);
-	title_color[RENDER_VALUE_FRAGMENT] = ImVec4(.5,0,0,1);
-
-	title_hovered_color[RENDER_VALUE_VERTEX] = ImVec4(0,.9, 0,1);
-	title_hovered_color[RENDER_VALUE_FRAGMENT] = ImVec4(.9,0,0,1);
-	
-	title_selected_color[RENDER_VALUE_VERTEX] = ImVec4(0, .7,0,1);
-	title_selected_color[RENDER_VALUE_FRAGMENT] = ImVec4(.7,0,0,1);
 }
 
 static bool was_opened_node = false;
@@ -54,32 +46,22 @@ void SQUE_RenderGraph::UpdateRMMenu()
 			if (num_nodes > 0)
 			{
 				int* selected = new int[num_nodes];
-				ImNodes::GetSelectedNodes(selected);
+ImNodes::GetSelectedNodes(selected);
 
-				if (!was_opened_node)
-					was_opened_node = (num_nodes == 1 && ImNodes::IsNodeHovered(&node_hovered) && (*selected) == node_hovered);
-				delete selected;
+if (!was_opened_node)
+was_opened_node = (num_nodes == 1 && ImNodes::IsNodeHovered(&node_hovered) && (*selected) == node_hovered);
+delete selected;
 			}
 		}
 		if (!was_opened_node)
 		{
 			// Canvas Right Mouse Menu
-			if (ImGui::MenuItem("Add Vertex Step"))
+			if (ImGui::MenuItem("Add Render Step"))
 			{
 				RenderStep* new_step = new RenderStep();
 				sprintf(new_step->name, "NewRenderStep");
-				new_step->type = RENDER_VALUE_VERTEX;
-				new_step->shader_out = Render_GenOutputValue();
-				new_step->shader_out.type = RENDER_VALUE_VERTEX;
-				Render_AddStep(new_step);
-			}
-			if (ImGui::MenuItem("Add Fragment Step"))
-			{
-				RenderStep* new_step = new RenderStep();
-				sprintf(new_step->name, "NewRenderStep");
-				new_step->type = RENDER_VALUE_FRAGMENT;
-				new_step->shader_in = Render_GenInputValue();
-				new_step->shader_in.type = RENDER_VALUE_VERTEX;
+				new_step->frag_source_id = UINT32_MAX;
+				new_step->vert_source_id = UINT32_MAX;
 				Render_AddStep(new_step);
 			}
 		}
@@ -96,21 +78,21 @@ void SQUE_RenderGraph::UpdateRMMenu()
 		{
 			bool test = false;
 		}
-		
+
 		ImGui::Separator();
 
-		if (ImGui::MenuItem("Add Input"))
+		if (ImGui::MenuItem("Add Texture Output"))
 		{
-			Render_GetStep(selected[0])->input_data.push_back(Render_GenInputValue());
-		}
-		if (ImGui::MenuItem("Add Output"))
-		{
-			Render_GetStep(selected[0])->output_data.push_back(Render_GenOutputValue());
+			RenderStep* step = Render_GetStep(selected[0]);
+			step->texture_names.push_back("OutputTex");
+			step->framebuffer.textures.push_back(SQUE_Texture());
+			step->internal_texture_ids.push_back(SQUE_RNG());
+
 		}
 		delete selected;
 	}
-	
-	if (to_open) 
+
+	if (to_open)
 		ImGui::EndPopup();
 	else
 	{
@@ -139,17 +121,7 @@ void SQUE_RenderGraph::UpdateNodeTitleBar(RenderStep* step)
 	else
 		ImGui::Text(step->name);
 
-	if (step->shader_in.type != -1)
-	{
-		ImNodes::BeginInputAttribute(step->shader_in.id, ImNodesPinShape_QuadFilled);
-		ImNodes::EndInputAttribute();
-	}
-	if (step->shader_out.type != -1)
-	{
-		ImNodes::BeginOutputAttribute(step->shader_out.id, ImNodesPinShape_QuadFilled);
-		ImNodes::EndOutputAttribute();
-	}
-	ImNodes::EndNodeTitleBar();	
+	ImNodes::EndNodeTitleBar();
 }
 
 
@@ -158,18 +130,56 @@ void SQUE_RenderGraph::UpdateNodeOptions(RenderStep* step)
 	// TODO: Change from buttons to another right mouse menu for each node specific
 	// Node settings outside of the canvas
 	// Smae with name changes, try on a per item basis somehow
-}
+	ImVec2 min;
+	ImVec2 max;
+
+	// Vertex Shader
+	const SQUE_CtrlAsset* vert_s = AssetManager_GetConstAsset(step->vert_source_id);
+	if (vert_s != NULL)
+		ImGui::Text("VS: %s", vert_s->name);
+	else
+		ImGui::Text("VS: NotSet...");
+	min = ImGui::GetItemRectMin();
+	if (ImGui::Button(ICON_FK_LINK))
+	{
+		// popup to search all .sq_verts
+	}
+	max = ImGui::GetItemRectMax();
+	FileDraggable* shader_drag = (FileDraggable*)EngineUI_CheckDroppedDraggable(min, max);
+	if (shader_drag != NULL && (AssetManager_GetConstAsset(shader_drag->file_id)->type == FT_VERT_SHADER))
+	{
+		step->vert_source_id = shader_drag->file_id;
+	}
+
+	// Fragment Shader
+	const SQUE_CtrlAsset* frag_s = AssetManager_GetConstAsset(step->frag_source_id);
+	if (vert_s != NULL)
+		ImGui::Text("FS: %s", frag_s->name);
+	else
+		ImGui::Text("FS: NotSet...");
+	min = ImGui::GetItemRectMin();
+	if (ImGui::Button(ICON_FK_LINK))
+	{
+		// popup to search all .sq_verts
+	}
+	max = ImGui::GetItemRectMax();
+
+	if (shader_drag != NULL && (AssetManager_GetConstAsset(shader_drag->file_id)->type == FT_FRAG_SHADER))
+	{
+		step->vert_source_id = shader_drag->file_id;
+	}
+}	
 
 void SQUE_RenderGraph::UpdateNodeInputs(RenderStep* step)
 {
-	sque_vec<RenderValue>& inputs = step->input_data;
+	sque_vec<SQUE_Uniform>& inputs = step->program.uniforms;
 
 	static char options[32];
 	for (uint16_t i = 0; i < inputs.size(); ++i)
 	{
 		// Push Color Style
 
-		ImNodes::BeginInputAttribute(inputs[i].id);
+		ImNodes::BeginInputAttribute(step->internal_uniform_ids[i]);
 		if (editing_name)
 		{
 			static char id[32];
@@ -181,29 +191,8 @@ void SQUE_RenderGraph::UpdateNodeInputs(RenderStep* step)
 		
 		ImGui::SameLine();
 
-		sprintf(options, "##OutValueOption%d", i);
-		if(ImGui::BeginCombo(options, RenderValueString[inputs[i].type]))
-		{
-			bool is_selected;
-			for (uint16_t j = RENDER_VALUE_FLOAT; j < RENDER_VALUE_TABLE_NUM_STATES; ++j)
-			{
-				is_selected = ((j + RENDER_VALUE_FRAGMENT) == inputs[i].type);
-				if (ImGui::Selectable(RenderValueString[j], &is_selected))
-				{
-					inputs[i].type = j;
-					for (auto it = links.begin(); it != NULL && it != links.end(); ++it)
-					{
-						if (it->_data->in_id == step->input_data[i].id)
-						{
-							links.pop(it);
-							break;
-						}
-					}
-					break;
-				}
-			}
-			ImGui::EndCombo();
-		}
+		const char* type_string = RenderType_String(inputs[i].type);
+		ImGui::Text(" - %s##InValueOption%d", type_string, i);
 
 		ImNodes::EndInputAttribute();
 
@@ -215,43 +204,29 @@ void SQUE_RenderGraph::UpdateNodeOutputs(RenderStep* step)
 {
 	// Outputs
 	static char options[32];
-	for (uint16_t i = 0; i < step->output_data.size(); ++i)
+	sque_vec<SQUE_Texture>& outputs = step->framebuffer.textures;
+	sque_vec<std::string> tex_names = step->texture_names;
+	for (uint16_t i = 0; i < outputs.size(); ++i)
 	{
 		// TODO: Push Color Styles
-		ImNodes::BeginOutputAttribute(step->output_data[i].id);
+		ImNodes::BeginOutputAttribute(step->internal_texture_ids[i]);
 
-		sprintf(options, "##OutValueOption%d", i);
-		if (ImGui::BeginCombo(options, RenderValueString[step->output_data[i].type]))
-		{
-			bool is_selected;
-			for (uint16_t j = RENDER_VALUE_FLOAT; j < RENDER_VALUE_TABLE_NUM_STATES; ++j)
-			{
-				is_selected = ((j) == step->output_data[i].type);
-				if (ImGui::Selectable(RenderValueString[j], &is_selected))
-				{
-					step->output_data[i].type = j;
-					for (auto it = links.begin(); it != NULL && it != links.end(); ++it)
-					{
-						if (it->_data->in_id == step->output_data[i].id)
-						{
-							links.pop(it);
-							break;
-						}
-					}
-					break;
-				}
-			}
-			ImGui::EndCombo();
-		}
-		ImGui::SameLine();
 		if (editing_name)
 		{
 			static char id[32];
-			sprintf(id, "##%s%d", step->output_data[i].name, step->output_data[i].id);
-			ImGui::InputText(id, step->output_data[i].name, sizeof(step->output_data[i].name));
+			sprintf(id, "##%s%d", tex_names[i], outputs[i].id);
+			//ImGui::InputText(id, tex_names[i]., sizeof(tex_names[i]));
+			ImGui::Text("NameNotChangeable,WIP...");
 		}
 		else
-			ImGui::Text(step->output_data[i].name);
+			ImGui::Text(tex_names[i].c_str());
+		
+		ImGui::SameLine();
+
+		const char* type_string = TextureType_String(outputs[i].use_format);
+		ImGui::Text("(%s)", type_string, i);
+
+		
 		ImNodes::EndInputAttribute();
 		// TODO: Pop Color styles
 	}
@@ -278,10 +253,8 @@ void SQUE_RenderGraph::Update(float dt)
 		{
 			RenderStep* step = steps[i];
 			int node_id = item_id;
-			
-			ImNodes::PushColorStyle(ImNodesCol_TitleBar, title_color[step->type]);
-			ImNodes::PushColorStyle(ImNodesCol_TitleBarHovered, title_hovered_color[step->type]);
-			ImNodes::PushColorStyle(ImNodesCol_TitleBarSelected, title_selected_color[step->type]);
+				
+			// Specific RenderStepColor?
 			
 			ImNodes::BeginNode(step->id);
 			
@@ -296,7 +269,7 @@ void SQUE_RenderGraph::Update(float dt)
 			ImVec2 sep_pos = ImGui::GetCursorScreenPos();
 			sep_pos.y += 5;
 			ImDrawList* draw_list = ImGui::GetWindowDrawList();
-			draw_list->AddLine(sep_pos, ImVec2(sep_pos.x + node_dimentions.x-20, sep_pos.y), title_color[step->type], 5);
+			draw_list->AddLine(sep_pos, ImVec2(sep_pos.x + node_dimentions.x-20, sep_pos.y), ImGui::GetColorU32(ImVec4()), 5);
 			ImGui::SetCursorPosY(sep_pos.y - 55);
 			UpdateNodeOutputs(step);
 
@@ -306,9 +279,6 @@ void SQUE_RenderGraph::Update(float dt)
 			
 			ImNodes::EndNode();
 
-			ImNodes::PopColorStyle();
-			ImNodes::PopColorStyle();
-			ImNodes::PopColorStyle();
 		}
 		uint32_t link_num = 0;
 		list_node<AttributeLink>* t = links.begin();
@@ -332,21 +302,22 @@ void SQUE_RenderGraph::Update(float dt)
 					new_link.out_id = temp;
 				}
 
-				RenderValue* in = Render_GetValue(new_link.in_id);
-				RenderValue* out = Render_GetValue(new_link.out_id);
+				// - render_steps[i]->id id has to be managed with render id... to make them a bit more unique for imnodes
+				RenderValue_Link in = Render_GetValue(new_link.in_id);
+				RenderValue_Link out = Render_GetValue(new_link.out_id);
 
-				if (in != NULL && out != NULL && in->type == out->type)
+				if (in.id != UINT32_MAX && out.id != UINT32_MAX && in.type == out.type)
 				{
 					for (list_node<AttributeLink>* it = links.begin(); it != links.end(); it = it->next)
 					{
-						if (it->_data->in_id == in->id)
+						if (it->_data->in_id == in.id)
 						{
-							it->_data->out_id = out->id;
-							out = NULL;
+							it->_data->out_id = out.id;
+							out.id = UINT32_MAX;
 							break;
 						}
 					}
-					if(out != NULL) links.push_back(new_link);
+					if(out.id != UINT32_MAX) links.push_back(new_link);
 				}
 			}				
 		}

@@ -14,7 +14,6 @@ private:
     SQUE_Camera camera;
     uint32_t render_step_ref;
     uint32_t output_value_ref;
-
 public:
     void Init() final;
     void Update(float dt) final;

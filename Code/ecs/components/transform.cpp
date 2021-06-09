@@ -2,26 +2,30 @@
 sque_free_vec<SQUE_Transform> transforms;
 static SQUE_Transform invalid_transform;
 
-SQUE_Component SQUE_Transform::Create()
+SQUE_Component SQUE_Transform::Create(const uint32_t _e_id)
 {
     SQUE_Component ret;
     uint32_t ref = transforms.push(SQUE_Transform());
     ret.type = SQUE_Transform::static_type;
     ret.id = transforms[ref].id;
+    transforms[ref].par_id = _e_id;
+    ret.par_id = _e_id;
     return ret;
 }
 
-SQUE_Component SQUE_Transform::Create(const SQUE_Transform& copy)
+SQUE_Component SQUE_Transform::Create(const SQUE_Transform& copy, const uint32_t _e_id)
 {
     SQUE_Component ret;
     uint32_t ref = transforms.push(SQUE_Transform());
     ret.type = SQUE_Transform::static_type;
     ret.id = transforms[ref].id;
     transforms[ref] = copy;
+    transforms[ref].par_id = _e_id;
+    ret.par_id = _e_id;
     return ret;
 }
 
-SQUE_Component SQUE_Transform::Create(const SQUE_Component* copy)
+SQUE_Component SQUE_Transform::Create(const SQUE_Component* copy, const uint32_t _e_id)
 {
     SQUE_Transform* t_copy = (SQUE_Transform*)copy;
     SQUE_Component ret;
@@ -29,6 +33,8 @@ SQUE_Component SQUE_Transform::Create(const SQUE_Component* copy)
     ret.type = SQUE_Transform::static_type;
     ret.id = transforms[ref].id;
     transforms[ref] = *t_copy;
+    transforms[ref].par_id = _e_id;
+    ret.par_id = _e_id;
     return ret;
 }
 

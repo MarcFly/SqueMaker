@@ -18,8 +18,8 @@
 // Still this will fail should someone add components from elsewhere, like runtime...
 // How would someone expand without having to thouch this file?
 
-typedef SQUE_Component CreateFun();
-typedef SQUE_Component TemplateCreateFun(const SQUE_Component* copy);
+typedef SQUE_Component CreateFun(const uint32_t _e_id);
+typedef SQUE_Component TemplateCreateFun(const SQUE_Component* copy, const uint32_t _e_id);
 typedef SQUE_Component* GetFun(const uint32_t id);
 typedef SQUE_Component* AllocateCopyFun(const uint32_t id);
 

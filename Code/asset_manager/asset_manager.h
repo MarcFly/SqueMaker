@@ -29,6 +29,32 @@
     - All assets have to be symbolized - aka loaded with its properties but not the actual data until used
 */
 
+typedef void(ImportFileFun)(const SQUE_CtrlAsset* asset);
+static const ImportFileFun* test = [](const SQUE_CtrlAsset* a) {
+    SQUE_PRINT(LT_INFO, "Tried importing: %s from %s", a->name, a->location); };
+
+// Will have to be changed into a X3 macro (import and export)
+// Then another X2 for (load unload)
+#define FILE_IMPORTER_TABLE(ENTRY) \
+        ENTRY(FT_UNKNOWN, test) \
+        ENTRY(FT_FOLDER, test) \
+        ENTRY(FT_META, test) \
+        ENTRY(FT_CUSTOM, test) \
+        ENTRY(FT_IMAGE, test) \
+        ENTRY(FT_OBJECT, test) \
+        ENTRY(FT_MATERIAL, test) \
+        ENTRY(FT_VERT_SHADER, test) \
+        ENTRY(FT_FRAG_SHADER, test) //
+
+enum FileType
+{
+    FILE_IMPORTER_TABLE(EXPAND_AS_ENUM)
+    FILE_TYPE_MAX
+};
+
+
+// This feels bad but I don't know how to deal with it in any other way.
+uint32_t GetFileType(const char* path);
 
 
 void AssetManager_ChangeUnusedTimeUnload(const double time_ms);

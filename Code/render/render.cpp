@@ -1,15 +1,6 @@
 #include "./render.h"
 
-// I don't think this will work out because there will be much more types of objects...
-sque_vec<SQUE_Mesh> meshes;
-sque_vec<SQUE_Texture> textures;
-sque_vec<SQUE_Shader> shaders;
-sque_vec<SQUE_Program> programs; 
-sque_vec<SQUE_Framebuffer> framebuffers;
-
 sque_vec<RenderStep*> render_steps; //  TODO: Cleanup RenderSteps... Valgrind 126/235
-
-sque_vec<sque_vec<CompiledSteps>> compiled_steps;
 
 void Render_Init()
 {
@@ -30,23 +21,36 @@ void Render_CleanUp()
     render_steps.clear();
 }
 
-RenderValue Render_GenInputValue()
+RenderValue_Link Render_GetValue(const uint32_t id)
 {
-    RenderValue ret;
-    ret.id = SQUE_RNG(INT32_MAX-1);
-    CLR_FLAG(ret.id, 1);
-    sprintf(ret.name, "Input");
-    ret.type = RENDER_VALUE_FLOAT;
-    return ret;
-}
+    RenderValue_Link ret;
 
-RenderValue Render_GenOutputValue()
-{
-    RenderValue ret;
-    ret.id = SQUE_RNG(INT32_MAX-1);
-    SET_FLAG(ret.id, 1);
-    sprintf(ret.name, "Output");
-    ret.type = RENDER_VALUE_FLOAT;
+    for(uint16_t i = 0; i < render_steps.size(); ++i)
+    {
+        const sque_vec<uint32_t>& unifs = render_steps[i]->internal_uniform_ids; 
+        for (uint16_t j = 0; j < unifs.size(); ++i)
+        {
+            if(unifs[i] == id )
+            {
+                ret.id = id;
+                ret.type = render_steps[i]->program.uniforms[j].type;
+                return ret;
+            }
+        }
+
+        const sque_vec<uint32_t>& texs = render_steps[i]->internal_texture_ids;
+        for (uint16_t j = 0; j < texs.size(); ++j)
+        {
+            if (texs[i] == id)
+            {
+                ret.id = id;
+                ret.type = render_steps[i]->framebuffer.textures[j].use_format;
+                return ret;
+            }
+        }
+    }
+
+    ret.type = ret.id = UINT32_MAX;
     return ret;
 }
 
@@ -73,20 +77,4 @@ RenderStep* Render_GetStep(uint32_t render_step_id)
         if (render_step_id == render_steps[i]->id)
             return render_steps[i];
     return NULL;
-}
-
-RenderValue* Render_GetValue(const uint32_t id)
-{
-    for (uint32_t i = 0; i < render_steps.size(); ++i)
-    {
-        RenderStep& step = *render_steps[i];
-        if (id == step.shader_in.id) return &step.shader_in;
-        if (id == step.shader_out.id) return &step.shader_out;
-        for (uint16_t j = 0; j < step.input_data.size(); ++j)
-            if (id == step.input_data[j].id) return &step.input_data[j];
-        for (uint16_t j = 0; j < step.output_data.size(); ++j)
-            if (id == step.output_data[j].id) return &step.output_data[j];
-    }
-    return NULL;
-
 }

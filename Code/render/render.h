@@ -34,78 +34,31 @@
     but these steps are ordered, so one can only take a look at previously generated tags!
 */
 
-
-// Function calls what to do with each type of value...
-// Uniform, Drawable of a type (static, dynamic, alpha,...), Texture,
-// How to deal with uniforms? I can equate them to SQUE_Types...
-typedef struct RenderValue
-{
-    char name[24] = "RenderValue";
-    int id = -1; // Because the id system in imnodes uses only int and there is not proper translation between them...
-    uint32_t type = -1;
-} RenderValue;
-
-RenderValue Render_GenInputValue();
-RenderValue Render_GenOutputValue();
-
-typedef void RenderValueFun(const RenderValue& value);
-inline void BadRenderValueFun(const RenderValue& value) 
-{
-    // Perform Operations related to value for a shader
-    // Set Uniform, Perform linkage from a fragment shader to a Vertex shader,...
-    // Will have to deal with it in the step of compiling and such.
-    // This type of funs should be called inline
-}
-// Shader Types will have to be put between Vertex and Fragment
-#define RENDER_VALUE_TABLE(ENTRY) \
-        ENTRY(RENDER_VALUE_VERTEX, "Vertex", BadRenderValueFun) \
-        ENTRY(RENDER_VALUE_FRAGMENT, "Fragment", BadRenderValueFun) \
-        ENTRY(RENDER_VALUE_FLOAT, "Float", BadRenderValueFun) \
-        ENTRY(RENDER_VALUE_INT, "Int", BadRenderValueFun) \
-        ENTRY(RENDER_VALUE_TEXTURE, "Texture", BadRenderValueFun) \
-        ENTRY(RENDER_VALUE_MATRIX4x4, "Matrix4x4", BadRenderValueFun) \
-        ENTRY(RENDER_VALUE_FVEC2, "FVec2", BadRenderValueFun) \
-        ENTRY(RENDER_VALUE_FVEC3, "FVec3", BadRenderValueFun) \
-        ENTRY(RENDER_VALUE_FVEC4, "FVec4", BadRenderValueFun)
-
-enum {
-    RENDER_VALUE_TABLE(X3_EXPAND_1)
-    RENDER_VALUE_TABLE_NUM_STATES
-};
-
-// Input Types: Uniform, Vertex Attribute, In
-// Output Type: Out,...
-// TODO: Join Render_Step and Values -> String and Deal with Function (Float, Vec2, Vec3, Vec4, Matrix4x4,...)
-
-static const char* RenderValueString[RENDER_VALUE_TABLE_NUM_STATES] = { RENDER_VALUE_TABLE(X3_EXPAND_2) };
-static RenderValueFun* RenderValueFunTable[RENDER_VALUE_TABLE_NUM_STATES] = {RENDER_VALUE_TABLE(X3_EXPAND_3)};
-
-
-
-typedef struct RenderStep
+struct RenderStep
 {
     char name[24];
     uint32_t id = -1;
-    uint32_t type = -1;
-
-    RenderValue shader_in;
-    RenderValue shader_out;
-    // sque_vec<uint32_t> input_tags;
-    sque_vec<RenderValue> input_data;
-    sque_vec<RenderValue> output_data;
     
+    uint32_t vert_source_id;
+    uint32_t frag_source_id;
+
     SQUE_RenderState state;
-
-    const char* shader_source;
-} RenderStep;
-
-typedef struct CompiledSteps
-{
-    sque_vec<uint32_t> step_ids;
-
     SQUE_Framebuffer framebuffer;
     SQUE_Program program;
-} CompiledSteps;
+
+    // UI / Serialization / Runtime data
+    sque_vec<uint32_t> internal_uniform_ids; // Setup when program is linked and uniform cached...
+    sque_vec<uint32_t> internal_texture_ids; // Setup when user creates a texture
+
+    sque_vec<std::string> texture_names; // Change sometime
+    sque_vec<uint32_t> uniform_link_ids;
+};
+
+struct RenderValue_Link
+{
+    uint32_t id;
+    uint32_t type;
+};
 
 void Render_Init();
 void Render_Update(float dt);
@@ -113,9 +66,9 @@ void Render_CleanUp();
 
 void Render_CompileSteps();
 
-sque_vec<RenderStep*>& Render_GetSteps();
+RenderValue_Link Render_GetValue(const uint32_t id);
 
-RenderValue* Render_GetValue(const uint32_t id);
+sque_vec<RenderStep*>& Render_GetSteps();
 
 void Render_AddStep(RenderStep* render_step);
 RenderStep* Render_GetStep(uint32_t render_step_id);

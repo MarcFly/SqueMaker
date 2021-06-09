@@ -13,6 +13,32 @@ struct EngineMaterial
 
 };
 
+
+void SerializePrimitiveConfig(SQUE_OutStream* out, const SQUE_Mesh* config)
+{
+	out->WriteBytes(&config->draw_config);
+	out->WriteBytes(&config->draw_mode);
+	out->WriteBytes(&config->num_verts);
+	out->WriteBytes(&config->num_index);
+	out->WriteBytes(&config->index_var);
+	out->WriteBytes(&config->index_var_size);
+
+	uint32_t num_attribs = config->attributes.size();
+	out->WriteBytes(&num_attribs,1); 
+	for (uint16_t i = 0; i < num_attribs; ++i)
+	{
+		out->WriteBytes(&config->attributes[i].id);
+		out->WriteBytes(&config->attributes[i].var_type);
+		out->WriteBytes(&config->attributes[i].num_comp);
+		out->WriteBytes(&config->attributes[i].normalize);
+		out->WriteBytes(&config->attributes[i].var_size);
+		out->WriteBytes(&config->attributes[i].offset);
+		
+		
+		out->WriteBytes(config->attributes[i].name, strlen(config->attributes[i].name));
+	}
+}
+
 struct EngineMeshPrimitive
 {
 	~EngineMeshPrimitive() {
@@ -38,8 +64,6 @@ struct EngineMesh
 	
 	sque_vec <EngineMeshPrimitive> primitives;
 };
-
-
 
 static tinygltf::Model model;
 static tinygltf::TinyGLTF loader;
@@ -87,6 +111,7 @@ void AssetManager_ImportMesh(const SQUE_CtrlAsset* asset)
 
 		uint32_t new_asset = AssetManager_DeclareAsset(name, path);
 		SQUE_CtrlAsset* ctrl_asset = AssetManager_Get(new_asset);
+		ctrl_asset->type = FT_OBJECT;
 		ctrl_asset->datapack.data.raw_data = (char*)mesh;
 		ctrl_asset->datapack.data.size = sizeof(EngineMesh);
 
@@ -133,11 +158,10 @@ void AssetManager_ImportMesh(const SQUE_CtrlAsset* asset)
 		// Bruteforce serialization for now
 		for (uint16_t k = 0; k < mesh->primitives.size(); ++k)
 		{
-			out.WriteBytes(&mesh->primitives[k].config, 1);
-			// Config has to serialize Attributes...
-			out.WriteBytes(&mesh->primitives[k].vertices_size, 1);
+			SerializePrimitiveConfig(&out, &mesh->primitives[k].config);
+			out.WriteBytes(&mesh->primitives[k].vertices_size);
 			out.WriteBytes(mesh->primitives[k].vertices, mesh->primitives[k].vertices_size);
-			out.WriteBytes(&mesh->primitives[k].indices_size, 1);
+			out.WriteBytes(&mesh->primitives[k].indices_size);
 			out.WriteBytes(mesh->primitives[k].indices, mesh->primitives[k].indices_size);
 		}
 

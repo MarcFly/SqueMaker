@@ -6,6 +6,7 @@
 #include "IconsForkAwesome.h"
 #include <squelib.h>
 #include "../messages/messages.h"
+#include "../asset_manager/asset_manager.h"
 
 class SQUE_Executer
 {
@@ -77,7 +78,7 @@ void EngineUI_RegisterMessager(SQUE_Messager* msgr);
 
 void EngineUI_RequireUpdate(bool window_state);
 void EngineUI_StartDraggable(SQUE_ItemDraggable* item);
-SQUE_ItemDraggable* EngineUI_CheckDroppedDraggable();
+SQUE_ItemDraggable* EngineUI_CheckDroppedDraggable(const ImVec2 min, const ImVec2 max);
 void EngineUI_Update(float dt);
 
 void EngineUI_ExecuteAction(SQUE_Executer* action);

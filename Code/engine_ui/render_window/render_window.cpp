@@ -52,22 +52,22 @@ void SQUE_RenderWindow::Update(float dt)
         {
             ImGui::SameLine();
             RenderStep* step = steps[render_step_ref];
-            sque_vec<RenderValue>& output = step->output_data;
+            sque_vec<SQUE_Texture>& output = step->framebuffer.textures;
             if (output.size() > 0)
             {
                 bool combo_open = false;
 
                 if (output_value_ref > output.size())
-                    combo_open = ImGui::BeginCombo("##OutValues", output[0].name);
+                    combo_open = ImGui::BeginCombo("##OutValues", step->texture_names[0].c_str());
                 else
-                    combo_open = ImGui::BeginCombo("##OutValues", output[output_value_ref].name);
+                    combo_open = ImGui::BeginCombo("##OutValues", step->texture_names[output_value_ref].c_str());
                 if (combo_open)
                 {
                     bool is_selected;
                     for (uint16_t i = 0; i < output.size(); ++i)
                     {
                         is_selected = (i == output_value_ref);
-                        if (ImGui::Selectable(output[i].name, &is_selected))
+                        if (ImGui::Selectable(step->texture_names[i].c_str(), &is_selected))
                         {
                             output_value_ref = i;
                             break;

@@ -84,7 +84,7 @@ SQUE_Component* SQUE_ECS_Component_AllocateCopy(const SQUE_Entity& entity, const
 template<class T>
 void SQUE_ECS_AddComponent(const SQUE_Entity& entity)
 {
-	SQUE_Component cpy = T::Create();
+	SQUE_Component& cpy = T::Create(entity.id);
 	SQUE_ECS_DeclareComponent(entity.comp_ref, cpy);// T::Create());
 }
 

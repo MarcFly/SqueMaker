@@ -138,14 +138,14 @@ void SQUE_ECS_DeclareComponent(const uint32_t component_ref, SQUE_Component& com
 #include "components/components_includeall.h"
 void SQUE_ECS_Component_AddType(const SQUE_Entity& entity, const uint32_t type)
 {
-	SQUE_Component temp = CreateFunTable[type]();
+	SQUE_Component temp = CreateFunTable[type](entity.id);
 	SQUE_ECS_DeclareComponent(entity.comp_ref, temp);
 	//SQUE_ECS_DeclareComponent(entity.comp_ref, const CreateFunTable[type]());
 }
 
 void SQUE_ECS_Component_CopyFromGeneric(const SQUE_Entity& entity, const uint32_t type, const SQUE_Component* copy)
 {
-	SQUE_Component temp = TemplateCreateFunTable[type](copy);
+	SQUE_Component temp = TemplateCreateFunTable[type](copy, entity.id);
 	SQUE_ECS_DeclareComponent(entity.comp_ref, temp);
 }
 

@@ -2,26 +2,30 @@
 sque_free_vec<SQUE_Camera> cameras;
 static SQUE_Camera invalid_cam;
 
-SQUE_Component SQUE_Camera::Create()
+SQUE_Component SQUE_Camera::Create(const uint32_t _e_id)
 {
     SQUE_Component ret;
     uint32_t ref = cameras.push(SQUE_Camera());
     ret.type = SQUE_Camera::static_type;
     ret.id = cameras[ref].id;
+    cameras[ref].par_id = _e_id;
+    ret.par_id = _e_id;
     return ret;
 }
 
-SQUE_Component SQUE_Camera::Create(const SQUE_Camera& copy)
+SQUE_Component SQUE_Camera::Create(const SQUE_Camera& copy, const uint32_t _e_id)
 {
     SQUE_Component ret;
     uint32_t ref = cameras.push(SQUE_Camera());
     ret.type = SQUE_Camera::static_type;
     ret.id = cameras[ref].id;
     cameras[ref] = copy;
+    cameras[ref].par_id = _e_id;
+    ret.par_id = _e_id;
     return ret;
 }
 
-SQUE_Component SQUE_Camera::Create(const SQUE_Component* copy)
+SQUE_Component SQUE_Camera::Create(const SQUE_Component* copy, const uint32_t _e_id)
 {
     SQUE_Camera* t_copy = (SQUE_Camera*)copy;
     SQUE_Component ret;
@@ -29,6 +33,8 @@ SQUE_Component SQUE_Camera::Create(const SQUE_Component* copy)
     ret.type = SQUE_Camera::static_type;
     ret.id = cameras[ref].id;
     cameras[ref] = *t_copy;
+    cameras[ref].par_id = _e_id;
+    ret.par_id = _e_id;
     return ret;
 }
 

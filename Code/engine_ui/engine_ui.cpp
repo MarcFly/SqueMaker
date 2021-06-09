@@ -271,11 +271,13 @@ bool SQUE_ItemDraggable::CheckStartDrag()
 void EngineUI_StartDraggable(SQUE_ItemDraggable* item)
 {
     draggable = item;
+    ImGui::SetMouseCursor(ImGuiMouseCursor_Hand);
 }
 
-SQUE_ItemDraggable* EngineUI_CheckDroppedDraggable()
+SQUE_ItemDraggable* EngineUI_CheckDroppedDraggable(const ImVec2 min, const ImVec2 max)
 {
-    if (!ImGui::IsMouseDown(SQUE_MOUSE_LEFT) && draggable != NULL)
+    if (!ImGui::IsMouseDown(SQUE_MOUSE_LEFT) && draggable != NULL 
+        && ImGui::IsMouseHoveringRect(min, max, false))
         return draggable;
     return NULL;
 }
@@ -303,11 +305,12 @@ void EngineUI_Update(float dt)
 
     // Things that have draggables should check if a draggable has been dropped over them
     // How would I do this in another way?
-    if (EngineUI_CheckDroppedDraggable() != NULL)
+    if (!ImGui::IsMouseDown(SQUE_MOUSE_LEFT) && draggable != NULL)
     {
         draggable->CleanUp();
         delete draggable;
         draggable = NULL;
+        ImGui::SetMouseCursor(ImGuiMouseCursor_Arrow);
     }
 
     return;

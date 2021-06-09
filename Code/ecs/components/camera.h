@@ -8,9 +8,9 @@ class SQUE_Camera : public SQUE_Component
 {
 public:
 // Required for all components
-    static SQUE_Component Create();
-    static SQUE_Component Create(const SQUE_Camera& copy);
-    static SQUE_Component Create(const SQUE_Component* copy);
+    static SQUE_Component Create(const uint32_t _e_id = UINT32_MAX);
+    static SQUE_Component Create(const SQUE_Camera& copy, const uint32_t _e_id = UINT32_MAX);
+    static SQUE_Component Create(const SQUE_Component* copy, const uint32_t _e_id = UINT32_MAX);
     static SQUE_Camera& Get(uint32_t id);
     static SQUE_Component* GetGenericP(const uint32_t id);
     static SQUE_Component* AllocateCopy(const uint32_t id);

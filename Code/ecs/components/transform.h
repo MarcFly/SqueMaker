@@ -8,10 +8,10 @@
 class SQUE_Transform : public SQUE_Component
 {
 public:
-    static SQUE_Component Create(const SQUE_Component* copy);
+    static SQUE_Component Create(const SQUE_Component* copy, const uint32_t _e_id = UINT32_MAX);
 // Required for all components
-    static SQUE_Component Create();
-    static SQUE_Component Create(const SQUE_Transform& copy);
+    static SQUE_Component Create(const uint32_t _e_id = UINT32_MAX);
+    static SQUE_Component Create(const SQUE_Transform& copy, const uint32_t _e_id = UINT32_MAX);
     static SQUE_Transform& Get(const uint32_t id);
     static SQUE_Component* GetGenericP(const uint32_t id);
     static SQUE_Component* AllocateCopy(const uint32_t id);

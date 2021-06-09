@@ -29,6 +29,8 @@ class RenderStep_UI_Item
 public:
 	ImVec2 pos;
 	
+	ImColor title_color;
+
 	void Update();
 };
 
@@ -42,6 +44,37 @@ public:
 
 #define RENDER_VALUE_ICON_TABLE(ENTRY)
 
+// bad but i can't find any other easy way
+static const char* RenderType_String(const uint32_t type)
+{
+	switch (type)
+	{
+		case SQUE_FLOAT:	return "float";
+		case SQUE_INT:		return "int";
+		case SQUE_DOUBLE:	return "double";
+		case SQUE_FVEC2:	return "fvec2";
+		case SQUE_FVEC3:	return "fvec3";
+		case SQUE_FVEC4:	return "fvce4";
+		case SQUE_FMAT4:	return "fmat4";
+		case SQUE_SAMPLER2D:return "texture2D";
+	}
+	return "unsupported_type";
+}
+
+static const char* TextureType_String(const uint32_t type)
+{
+	switch (type)
+	{
+		case SQUE_RGBA:		return "RGBA";
+		case SQUE_RGBA8:	return "RGBA8";
+		case SQUE_R8:		return "R8";
+		case SQUE_R16:		return "R16";
+		case SQUE_RGB:		return "RGB";
+		case SQUE_RGB8:		return "RGB8";
+	}
+	return "unsupported_type";
+}
+
 class SQUE_RenderGraph : public SQUE_UI_Item
 {
 	sque_vec<RenderStep_UI_Item> steps;
@@ -50,12 +83,8 @@ class SQUE_RenderGraph : public SQUE_UI_Item
 	sque_list<AttributeLink> links;
 
 	bool editing_name = false;
-	// Render Graph Options
-	ImColor title_color[RENDER_VALUE_TABLE_NUM_STATES];
-	ImColor title_hovered_color[RENDER_VALUE_TABLE_NUM_STATES];
-	ImColor title_selected_color[RENDER_VALUE_TABLE_NUM_STATES];
-	//ImColor value_color[RENDER_VALUE_TABLE_NUM_STATES];
-	//ImColor value_hovered_color[RENDER_VALUE_TABLE_NUM_STATES];
+
+	sque_vec<uint32_t> selected_outputs;
 	
 public:
 	void Init() final;

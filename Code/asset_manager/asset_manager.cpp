@@ -1,10 +1,11 @@
-#include "./asset_manager.h"
-#include "./importers/importers_includeall.h"
+#include "asset_manager.h"
+
 
 static sque_vec<SQUE_CtrlAsset> assets;
 static sque_vec<SQUE_Dir> directories;
 static sque_vec<SQUE_Dir*> base_parents;
 static double unused_time_unload_ms = 5000;
+static sque_dyn_arr<ImportFileFun*> import_funs = { FILE_IMPORTER_TABLE(EXPAND_AS_VALUE) };
 
 void AssetManager_ChangeUnusedTimeUnload(const double time_ms)
 {
@@ -31,6 +32,7 @@ uint32_t AssetManager_DeclareAsset(const char* name, const char* location)
 	memcpy(new_asset.name, name, strlen(name));
 	memcpy(new_asset.location, location, strlen(location));
 	new_asset.type = GetFileType(location);
+	new_asset.last_update = 0;
 	if (new_asset.type == FT_FOLDER) return -1;
 	uint32_t exists = AssetManager_ExistsAsset(name, location);
 	if (exists != UINT32_MAX)
@@ -241,6 +243,13 @@ const char* AssetManager_GetDefaultDir_Meshes()
 	return tmp_meshes;
 }
 
+const char* AssetManager_GetDefaultDir_Textures()
+{
+	return tmp_textures;
+}
+
+#include <asset_manager/importers/importers_includeall.h>
+
 void AssetManager_Init()
 {
 	const char* exec_path = SQUE_FS_GetExecPath();
@@ -268,6 +277,9 @@ void AssetManager_Init()
 
 	delete[] assets;
 	delete[] resources;
+
+	// Setup the variables in the dynarray
+	import_funs[FT_OBJECT] = AssetManager_ImportMesh;
 }
 
 static SQUE_Timer test_timer;
@@ -304,4 +316,26 @@ void AssetManager_Update()
 	}
 
 
+}
+
+uint32_t GetFileType(const char* path)
+{
+	/*include more extensions as seem fit*/
+
+	const char* ext = strrchr(path, '.');
+	if (ext == NULL) return FT_FOLDER;
+	if (strcmp(ext, ".meta") == 0)
+		return FT_META;
+	else if (strstr(ext, ".sq") != NULL)
+		return FT_CUSTOM;
+	else if (strcmp(ext, ".png") == 0 || strcmp(ext, ".jpg") == 0 || strcmp(ext, ".jpeg") == 0)
+		return FT_IMAGE;
+	else if (strcmp(ext, ".gltf") == 0 || strcmp(ext, ".obj") == 0 || strcmp(ext, ".fbx") == 0)
+		return FT_OBJECT;
+	else if (strcmp(ext, ".vert") == 0 || strcmp(ext, ".vs") == 0)
+		return FT_VERT_SHADER;
+	else if (strcmp(ext, ".frag") == 0 || strcmp(ext, ".fs") == 0)
+		return FT_FRAG_SHADER;
+
+	return FT_UNKNOWN;
 }

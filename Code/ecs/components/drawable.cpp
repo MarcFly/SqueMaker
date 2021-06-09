@@ -2,26 +2,30 @@
 sque_free_vec<SQUE_Drawable> drawables;
 static SQUE_Drawable invalid_drawable;
 
-SQUE_Component SQUE_Drawable::Create()
+SQUE_Component SQUE_Drawable::Create(const uint32_t _e_id)
 {
     SQUE_Component ret;
     uint32_t ref = drawables.push(SQUE_Drawable());
+    drawables[ref].par_id = _e_id;
     ret.type = SQUE_Drawable::static_type;
     ret.id = drawables[ref].id;
+    ret.par_id = _e_id;
     return ret;
 }
 
-SQUE_Component SQUE_Drawable::Create(const SQUE_Drawable& copy)
+SQUE_Component SQUE_Drawable::Create(const SQUE_Drawable& copy, const uint32_t _e_id)
 {
     SQUE_Component ret;
     uint32_t ref = drawables.push(SQUE_Drawable());
     ret.type = SQUE_Drawable::static_type;
     ret.id = drawables[ref].id;
     drawables[ref] = copy;
+    drawables[ref].par_id = _e_id;
+    ret.par_id = _e_id;
     return ret;
 }
 
-SQUE_Component SQUE_Drawable::Create(const SQUE_Component* copy)
+SQUE_Component SQUE_Drawable::Create(const SQUE_Component* copy, const uint32_t _e_id)
 {
     SQUE_Drawable* t_copy = (SQUE_Drawable*)copy;
     SQUE_Component ret;
@@ -29,6 +33,8 @@ SQUE_Component SQUE_Drawable::Create(const SQUE_Component* copy)
     ret.type = SQUE_Drawable::static_type;
     ret.id = drawables[ref].id;
     drawables[ref] = *t_copy;
+    drawables[ref].par_id = _e_id;
+    ret.par_id = _e_id;
     return ret;
 }
 

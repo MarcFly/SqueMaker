@@ -63,12 +63,13 @@ void InspectorDrawable::Inspect()
 		ImVec2 max = ImGui::GetItemRectMax();
 
 		FileDraggable* mesh_drag = (FileDraggable*)EngineUI_CheckDroppedDraggable(min, max);
-		if(mesh_drag != NULL && (AssetManager_GetConstAsset(mesh_drag->file_id)->type == FT_CUSTOM))
+		if(mesh_drag != NULL && (AssetManager_GetConstAsset(mesh_drag->file_id)->type == FT_OBJECT))
 		{
 			c.mesh_id = mesh_drag->file_id;
 			// Send message for the drawable to have the new mesh...
 			SQUE_Drawable& c_ref = SQUE_ECS_GetComponentID<SQUE_Drawable>(SQUE_ECS_GetEntity(c.par_id), c.id);
-			c_ref.mesh_id = c.mesh_id;
+			AssetManager_SetAssetUser(&c_ref.mesh_id, c.mesh_id);
+			//c_ref.mesh_id = c.mesh_id;
 		}
 
 		// Materials

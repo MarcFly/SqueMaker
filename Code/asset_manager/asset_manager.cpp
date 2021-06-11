@@ -6,6 +6,8 @@ static sque_vec<SQUE_Dir> directories;
 static sque_vec<SQUE_Dir*> base_parents;
 static double unused_time_unload_ms = 5000;
 static sque_dyn_arr<ImportFileFun*> import_funs = { FILE_IMPORTER_TABLE(EXPAND_AS_VALUE) };
+static sque_dyn_arr<LoadUnloadFun*> load_funs = { FILE_LOAD_UNLOAD_TABLE(EXPAND_AS_ENUM) };
+static sque_dyn_arr<LoadUnloadFun*> unload_funs = { FILE_LOAD_UNLOAD_TABLE(EXPAND_AS_VALUE) };
 
 void AssetManager_ChangeUnusedTimeUnload(const double time_ms)
 {
@@ -232,6 +234,35 @@ void AssetManager_RefreshDirRecursive(const uint32_t dir_id)
 		delete ret[i];
 	}
 }
+
+void AssetManager_SetAssetUser(uint32_t* user, const uint32_t file_id)
+{
+	// Detract a user of a previous file
+	if (*user != UINT32_MAX)
+	{
+		for (uint16_t i = 0; i < assets.size(); ++i)
+			if (*user == assets[i].id)
+			{
+				--assets[i].current_users;
+				break;
+			}
+	}
+
+	if (file_id != UINT32_MAX)
+	{
+		for(uint16_t i = 0; i < assets.size(); ++i)
+			if (file_id == assets[i].id)
+			{
+				++assets[i].current_users;
+				if (!CHK_FLAG(assets[i].status_flags, SQ_AS_LOADED))
+				{
+					load_funs[assets[i].type](&assets[i]);
+				}
+				break;
+			}
+	}
+	*user = file_id;
+}
 #define _CRT_SECURE_NO_WARNINGS
 #include <cstdio>
 
@@ -249,6 +280,7 @@ const char* AssetManager_GetDefaultDir_Textures()
 }
 
 #include <asset_manager/importers/importers_includeall.h>
+#include <asset_manager/loaders/loaders_includeall.h>
 
 void AssetManager_Init()
 {
@@ -280,6 +312,10 @@ void AssetManager_Init()
 
 	// Setup the variables in the dynarray
 	import_funs[FT_OBJECT] = AssetManager_ImportMesh;
+	load_funs[FT_VERT_SHADER] = load_funs[FT_FRAG_SHADER] = LoadShader;
+	unload_funs[FT_VERT_SHADER] = unload_funs[FT_FRAG_SHADER] = UnloadShader;
+
+
 }
 
 static SQUE_Timer test_timer;
@@ -313,6 +349,14 @@ void AssetManager_Update()
 			SQUE_Swap(&assets[i], assets.last());
 			assets.pop_back();
 		}
+
+		if (CHK_FLAG(assets[i].status_flags, SQ_AS_CHANGED))
+		{
+			if(CHK_FLAG(assets[i].status_flags, SQ_AS_LOADED)) 
+				unload_funs[assets[i].type](&assets[i]);
+			load_funs[assets[i].type](&assets[i]);
+			CLR_FLAG(assets[i].status_flags, SQ_AS_CHANGED);
+		}
 	}
 
 
@@ -326,8 +370,6 @@ uint32_t GetFileType(const char* path)
 	if (ext == NULL) return FT_FOLDER;
 	if (strcmp(ext, ".meta") == 0)
 		return FT_META;
-	else if (strstr(ext, ".sq") != NULL)
-		return FT_CUSTOM;
 	else if (strcmp(ext, ".png") == 0 || strcmp(ext, ".jpg") == 0 || strcmp(ext, ".jpeg") == 0)
 		return FT_IMAGE;
 	else if (strcmp(ext, ".gltf") == 0 || strcmp(ext, ".obj") == 0 || strcmp(ext, ".fbx") == 0)
@@ -336,6 +378,16 @@ uint32_t GetFileType(const char* path)
 		return FT_VERT_SHADER;
 	else if (strcmp(ext, ".frag") == 0 || strcmp(ext, ".fs") == 0)
 		return FT_FRAG_SHADER;
+	else if (strstr(ext, "sq") != NULL)
+	{
+		if (strstr(ext, "mesh") != NULL)
+			return FT_OBJECT;
+		else if (strstr(ext, "frag") != NULL)
+			return FT_FRAG_SHADER;
+		else if (strstr(ext, "vert") != NULL)
+			return FT_VERT_SHADER;
+		// add custom types here
+	}
 
 	return FT_UNKNOWN;
 }

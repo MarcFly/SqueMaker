@@ -67,7 +67,9 @@ void SQUE_RenderWindow::Update(float dt)
                     for (uint16_t i = 0; i < output.size(); ++i)
                     {
                         is_selected = (i == output_value_ref);
-                        if (ImGui::Selectable(step->texture_names[i].c_str(), &is_selected))
+                        char name[64];
+                        sprintf(name, "%s%u##%u", step->texture_names[i].c_str(), i,i);
+                        if (ImGui::Selectable(name, &is_selected))
                         {
                             output_value_ref = i;
                             break;
@@ -83,14 +85,15 @@ void SQUE_RenderWindow::Update(float dt)
         ImGui::BeginChild("RenderOutput");
         if(render_step_ref != -1)
         {    
-            RenderStep* r_step = Render_GetStep(render_step_ref);
+            RenderStep* r_step = steps[render_step_ref];
             ImGui::GetWindowSize();
             if (output_value_ref != -1)
             {
                 ImVec2 wsize = ImGui::GetWindowSize();
                 // Data should not be held in values, but in the compiled steps
                 // Compiled 
-                //ImGui::Image(r_step->output_data[output_value_ref].data, wsize, ImVec2(0,1), ImVec2(1,0));
+                uint32_t id = r_step->framebuffer.textures[output_value_ref].id;
+                ImGui::Image((void*)r_step->framebuffer.textures[output_value_ref].id, wsize, ImVec2(0,1), ImVec2(1,0));
             }
         }
         ImGui::EndChild();

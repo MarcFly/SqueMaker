@@ -7,7 +7,7 @@
 int main(int argc, char** argv)
 {
     // Libraries Init
-    SQUE_LIB_Init("Sque Maker");
+    SQUE_LIB_Init("Sque Maker", SQ_INIT_DEFAULTS | SQ_INIT_DEBUG_RENDER);
 
     SQUE_DISPLAY_SetDropFileCallback(AssetManager_HandleDropFile);
     
@@ -16,7 +16,6 @@ int main(int argc, char** argv)
     EngineUI_Init();
     AssetManager_Init();
 
-    SQUE_CHECK_RENDER_ERRORS();
 
     // Update Loop
     float dt = 1 / 60.;
@@ -25,17 +24,15 @@ int main(int argc, char** argv)
         AssetManager_Update();
         // SqueLib Loop Needed
         SQUE_INPUT_Process(0);
-        SQUE_RENDER_Clear(ColorRGBA(.2, .2, .2, 1.));
+        SQUE_RENDER_Clear(ColorRGBA(.5, .2, .2, 1.));
         // Engine Specific Loop
-        Render_Update(dt);
-        EngineUI_Update(dt);
         
+        EngineUI_Update(dt);
+        Render_Update(dt);
         // Game Loop
 
         // SqueLib Loop Needed
-        
         SQUE_DISPLAY_SwapAllBuffers();
-        SQUE_CHECK_RENDER_ERRORS();
     }
 
     SQUE_ECS_EarlyDestruct();

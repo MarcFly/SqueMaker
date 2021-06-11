@@ -46,6 +46,18 @@ static const ImportFileFun* test = [](const SQUE_CtrlAsset* a) {
         ENTRY(FT_VERT_SHADER, test) \
         ENTRY(FT_FRAG_SHADER, test) //
 
+typedef void(LoadUnloadFun)(SQUE_CtrlAsset* data_pack);
+static const LoadUnloadFun* test_ul_fun = [](SQUE_CtrlAsset* a) { SQUE_PRINT(LT_INFO, "Tried loading/unloading: %s", a->name); };
+#define FILE_LOAD_UNLOAD_TABLE(ENTRY) \
+        ENTRY(test_ul_fun, test_ul_fun) \
+        ENTRY(test_ul_fun, test_ul_fun) \
+        ENTRY(test_ul_fun, test_ul_fun) \
+        ENTRY(test_ul_fun, test_ul_fun) \
+        ENTRY(test_ul_fun, test_ul_fun) \
+        ENTRY(test_ul_fun, test_ul_fun) \
+        ENTRY(test_ul_fun, test_ul_fun) \
+        ENTRY(test_ul_fun, test_ul_fun) \
+
 enum FileType
 {
     FILE_IMPORTER_TABLE(EXPAND_AS_ENUM)
@@ -66,6 +78,8 @@ void AssetManager_UseAsset(const uint32_t id);
 void AssetManager_UnuseAsset(const uint32_t id);
 const SQUE_Asset AssetManager_GetData(const uint32_t id);
 const SQUE_Asset AssetManager_GetMetaData(const uint32_t id);
+
+void AssetManager_SetAssetUser(uint32_t* user, const uint32_t file_id);
 
 void AssetManager_HandleDropFile(const char* location);
 

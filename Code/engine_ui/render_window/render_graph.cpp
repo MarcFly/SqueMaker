@@ -46,11 +46,11 @@ void SQUE_RenderGraph::UpdateRMMenu()
 			if (num_nodes > 0)
 			{
 				int* selected = new int[num_nodes];
-ImNodes::GetSelectedNodes(selected);
+				ImNodes::GetSelectedNodes(selected);
 
-if (!was_opened_node)
-was_opened_node = (num_nodes == 1 && ImNodes::IsNodeHovered(&node_hovered) && (*selected) == node_hovered);
-delete selected;
+				if (!was_opened_node)
+				was_opened_node = (num_nodes == 1 && ImNodes::IsNodeHovered(&node_hovered) && (*selected) == node_hovered);
+				delete selected;
 			}
 		}
 		if (!was_opened_node)
@@ -88,6 +88,16 @@ delete selected;
 			step->framebuffer.textures.push_back(SQUE_Texture());
 			step->internal_texture_ids.push_back(SQUE_RNG());
 
+			step->framebuffer.type = SQUE_FBO;
+			SQUE_Texture* tex = step->framebuffer.textures.last();
+			SQUE_TEXTURE_SetFormat(tex, SQUE_TEXTURE_2D, SQUE_RGBA, SQUE_RGBA, SQUE_UBYTE);
+			tex->channel_num = 4;
+			uint16_t w, h;
+			SQUE_DISPLAY_GetMainDisplaySize(&w, &h);
+			tex->w = w/10;
+			tex->h = h/10;
+
+			step->framebuffer.depth_type = SQUE_DEPTH16;
 		}
 		delete selected;
 	}
@@ -140,6 +150,7 @@ void SQUE_RenderGraph::UpdateNodeOptions(RenderStep* step)
 	else
 		ImGui::Text("VS: NotSet...");
 	min = ImGui::GetItemRectMin();
+	ImGui::SameLine();
 	if (ImGui::Button(ICON_FK_LINK))
 	{
 		// popup to search all .sq_verts
@@ -147,27 +158,31 @@ void SQUE_RenderGraph::UpdateNodeOptions(RenderStep* step)
 	max = ImGui::GetItemRectMax();
 	FileDraggable* shader_drag = (FileDraggable*)EngineUI_CheckDroppedDraggable(min, max);
 	if (shader_drag != NULL && (AssetManager_GetConstAsset(shader_drag->file_id)->type == FT_VERT_SHADER))
-	{
-		step->vert_source_id = shader_drag->file_id;
-	}
+		AssetManager_SetAssetUser(&step->vert_source_id, shader_drag->file_id);
 
 	// Fragment Shader
 	const SQUE_CtrlAsset* frag_s = AssetManager_GetConstAsset(step->frag_source_id);
-	if (vert_s != NULL)
+	if (frag_s != NULL)
 		ImGui::Text("FS: %s", frag_s->name);
 	else
 		ImGui::Text("FS: NotSet...");
 	min = ImGui::GetItemRectMin();
+	ImGui::SameLine();
 	if (ImGui::Button(ICON_FK_LINK))
 	{
 		// popup to search all .sq_verts
 	}
 	max = ImGui::GetItemRectMax();
-
+	shader_drag = (FileDraggable*)EngineUI_CheckDroppedDraggable(min, max);
 	if (shader_drag != NULL && (AssetManager_GetConstAsset(shader_drag->file_id)->type == FT_FRAG_SHADER))
-	{
-		step->vert_source_id = shader_drag->file_id;
-	}
+		AssetManager_SetAssetUser(&step->frag_source_id, shader_drag->file_id);
+
+	ImGui::PushItemWidth(max.x - min.x);
+	ImDrawList* draw_list = ImGui::GetWindowDrawList();
+	int line_w = 5;
+	draw_list->AddLine(ImVec2(min.x,max.y+line_w*2), ImVec2(max.x, max.y+line_w*2), ImGui::GetColorU32(ImVec4(.5,.5,.5,1)), line_w);
+
+	ImGui::PopItemWidth();
 }	
 
 void SQUE_RenderGraph::UpdateNodeInputs(RenderStep* step)
@@ -245,6 +260,11 @@ void SQUE_RenderGraph::Update(float dt)
 
 	if (ImGui::Begin(name, &active))
 	{
+		if (ImGui::Button("Compile Graph"))
+		{
+			Render_CompileSteps();
+		}
+
 		ImNodes::BeginNodeEditor();
 
 		sque_vec<RenderStep*>& steps = Render_GetSteps();
@@ -269,7 +289,7 @@ void SQUE_RenderGraph::Update(float dt)
 			ImVec2 sep_pos = ImGui::GetCursorScreenPos();
 			sep_pos.y += 5;
 			ImDrawList* draw_list = ImGui::GetWindowDrawList();
-			draw_list->AddLine(sep_pos, ImVec2(sep_pos.x + node_dimentions.x-20, sep_pos.y), ImGui::GetColorU32(ImVec4()), 5);
+			draw_list->AddLine(sep_pos, ImVec2(sep_pos.x + node_dimentions.x-20, sep_pos.y), ImGui::GetColorU32(ImVec4(.5, .5, .5, 1)), 5);
 			ImGui::SetCursorPosY(sep_pos.y - 55);
 			UpdateNodeOutputs(step);
 

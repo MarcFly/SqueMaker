@@ -83,7 +83,7 @@ void AssetManager_SetAssetUser(uint32_t* user, const uint32_t file_id);
 
 void AssetManager_HandleDropFile(const char* location);
 
-const sque_vec<SQUE_Dir*>& AssetManager_GetBaseDirs();
+const sque_vec<SQUE_Dir*> AssetManager_GetBaseDirs();
 const SQUE_Dir* AssetManager_GetDir(const uint32_t id);
 sque_vec<SQUE_CtrlAsset*> AssetManger_GetAssetsDir(const uint32_t dir_id);
 void AssetManager_RefreshDirRecursive(const uint32_t dir_id);
@@ -91,6 +91,8 @@ void AssetManager_RefreshDirRecursive(const uint32_t dir_id);
 
 void AssetManager_Init();
 void AssetManager_Update();
+void AssetManager_UnloadAsset(SQUE_CtrlAsset* asset);
+void AssetManager_LoadAsset(SQUE_CtrlAsset* asset);
 
 const char* AssetManager_GetDefaultDir_Meshes();
 const char* AssetManager_GetDefaultDir_Tetxures();

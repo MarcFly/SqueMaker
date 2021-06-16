@@ -7,12 +7,12 @@
 #include <external/tinygltf/tiny_gltf.h>
 #include <squelib.h>
 #include <asset_manager/asset_manager.h>
+#include <render/render.h>
 
 struct EngineMaterial
 {
 
 };
-
 
 void SerializePrimitiveConfig(SQUE_OutStream* out, const SQUE_Mesh* config)
 {
@@ -24,7 +24,7 @@ void SerializePrimitiveConfig(SQUE_OutStream* out, const SQUE_Mesh* config)
 	out->WriteBytes(&config->index_var_size);
 
 	uint32_t num_attribs = config->attributes.size();
-	out->WriteBytes(&num_attribs,1); 
+	out->WriteBytes(&num_attribs, 1);
 	for (uint16_t i = 0; i < num_attribs; ++i)
 	{
 		out->WriteBytes(&config->attributes[i].id);
@@ -33,37 +33,13 @@ void SerializePrimitiveConfig(SQUE_OutStream* out, const SQUE_Mesh* config)
 		out->WriteBytes(&config->attributes[i].normalize);
 		out->WriteBytes(&config->attributes[i].var_size);
 		out->WriteBytes(&config->attributes[i].offset);
-		
-		
-		out->WriteBytes(config->attributes[i].name, strlen(config->attributes[i].name));
+
+		uint32_t len = strlen(config->attributes[i].name);
+		out->WriteBytes(&len);
+		out->WriteBytes(config->attributes[i].name, len);
 	}
 }
 
-struct EngineMeshPrimitive
-{
-	~EngineMeshPrimitive() {
-		deleteRange(vertices, vertices + vertices_size);
-		deleteRange(indices, indices + indices_size);
-		free(indices);
-		free(vertices);
-	}
-
-	SQUE_Mesh config;
-	char* vertices;
-	uint32_t vertices_size;
-	char* indices;
-	uint32_t indices_size;
-};
-
-struct EngineMesh
-{
-	// Textures
-	// Materials
-	// Skeletons
-	// ...
-	
-	sque_vec <EngineMeshPrimitive> primitives;
-};
 
 static tinygltf::Model model;
 static tinygltf::TinyGLTF loader;
@@ -139,7 +115,7 @@ void AssetManager_ImportMesh(const SQUE_CtrlAsset* asset)
 				// stride? v.ByteStride(model.bufferViews[v.bufferView]);				
 			}
 
-			SQUE_MESH_SetDrawConfig(&e_p->config, SQUE_STATIC_DRAW, p.mode);
+			SQUE_MESH_SetDrawConfig(&e_p->config, p.mode, SQUE_STATIC_DRAW);
 			tinygltf::Accessor& v = model.accessors[p.indices];
 			SQUE_MESH_SetDataConfig(&e_p->config, e_p->config.num_verts, v.count, v.componentType);
 			e_p->indices_size = v.count * e_p->config.index_var_size;
@@ -148,15 +124,18 @@ void AssetManager_ImportMesh(const SQUE_CtrlAsset* asset)
 			// data could be that it needs to be loaded from uri (file in relative directory to asset, gltf should be base, then go into folders if so)
 			// in case data is not already loaded by tinygltf properly, have to load the buffer block.
 			memcpy(e_p->indices, &model.buffers[b_v.buffer].data[b_v.byteOffset], e_p->indices_size);
-			e_p->config.draw_mode = p.mode;
+			//e_p->config.draw_mode = p.mode;
 		}
 		// Materials
 		// Skeleton
 
 		// Serialize it
 		SQUE_OutStream out;
+		// Serialize num of meshes
+		uint32_t num_primitives = mesh->primitives.size();
+		out.WriteBytes(&num_primitives);
 		// Bruteforce serialization for now
-		for (uint16_t k = 0; k < mesh->primitives.size(); ++k)
+		for (uint16_t k = 0; k < num_primitives; ++k)
 		{
 			SerializePrimitiveConfig(&out, &mesh->primitives[k].config);
 			out.WriteBytes(&mesh->primitives[k].vertices_size);

@@ -61,6 +61,20 @@ SQUE_Component* SQUE_Drawable::AllocateCopy(const uint32_t id)
     return NULL;
 }
 
+#include <render/render.h>
+#include <glm/common.hpp>
+
+void SQUE_Drawable::Update(float dt)
+{
+    for (uint32_t i = 0; i < drawables.size(); ++i)
+    {
+        if (drawables[i].mesh_id == UINT32_MAX)
+            continue;
+        // SHould create here the world matrix properly from transform
+        Render_AddToDrawableList((float*)&drawables[i].worldMatrix[0], drawables[i].mesh_id);
+    }
+}
+
 SQUE_Drawable::SQUE_Drawable()
 {
     id = SQUE_RNG();

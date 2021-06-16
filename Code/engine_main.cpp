@@ -26,13 +26,14 @@ int main(int argc, char** argv)
         SQUE_INPUT_Process(0);
         SQUE_RENDER_Clear(ColorRGBA(.5, .2, .2, 1.));
         // Engine Specific Loop
-        
+        ECS_Update(dt);
         EngineUI_Update(dt);
         Render_Update(dt);
         // Game Loop
 
         // SqueLib Loop Needed
         SQUE_DISPLAY_SwapAllBuffers();
+
     }
 
     SQUE_ECS_EarlyDestruct();

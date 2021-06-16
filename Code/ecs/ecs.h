@@ -119,4 +119,7 @@ T& SQUE_ECS_GetComponentID(const SQUE_Entity& entity, const uint32_t comp_id)
 	return *(T*)(&invalid_comp); // This is not good, returns invalid data
 }
 
+
+void ECS_Update(float dt);
+
 #endif

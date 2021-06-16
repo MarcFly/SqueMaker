@@ -18,6 +18,8 @@ public:
     static SQUE_Component* AllocateCopy(const uint32_t id);
     static const uint32_t static_type = SQUE_ECS_DRAWABLE;
 
+    static void Update(float dt);
+
 // Drawable Specific
     
 
@@ -25,7 +27,7 @@ public:
     ~SQUE_Drawable();
 
     glm::mat4x4 worldMatrix;
-    uint32_t mesh_id;
+    uint32_t mesh_id = -1;
 
 
     // Copy For the data, ID is copied only if when required like in UI

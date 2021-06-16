@@ -101,7 +101,7 @@ void SQUE_AssetWindow::UpdateDirectory(const SQUE_Dir* dir)
 	}
 
 
-	for (uint32_t i = 0; open && i < dir->children_ids.size(); ++i)
+	for (uint32_t i = 0; dir->id != -1 && open && i < dir->children_ids.size(); ++i)
 	{
 		const SQUE_Dir* child_dir = AssetManager_GetDir(dir->children_ids[i]);
 		if(child_dir != NULL)
@@ -255,7 +255,7 @@ void SQUE_AssetWindow::Update(float dt)
 		ImGui::BeginChild("##AssetsFoldersHierarchy", child_sizes, true);
 		{
 
-			const sque_vec<SQUE_Dir*>& dirs = AssetManager_GetBaseDirs();
+			const sque_vec<SQUE_Dir*> dirs = AssetManager_GetBaseDirs();
 			for (uint16_t i = 0; i < dirs.size(); ++i)
 				UpdateDirectory(dirs[i]);
 		}

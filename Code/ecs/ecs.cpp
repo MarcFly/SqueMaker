@@ -180,3 +180,8 @@ sque_vec<SQUE_Entity>& SQUE_ECS_GetEntities()
 {
 	return entities;
 }
+
+void ECS_Update(float dt)
+{
+	SQUE_Drawable::Update(dt);
+}

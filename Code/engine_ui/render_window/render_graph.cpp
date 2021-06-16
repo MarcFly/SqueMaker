@@ -94,8 +94,14 @@ void SQUE_RenderGraph::UpdateRMMenu()
 			tex->channel_num = 4;
 			uint16_t w, h;
 			SQUE_DISPLAY_GetMainDisplaySize(&w, &h);
-			tex->w = w/10;
-			tex->h = h/10;
+			tex->w = w;
+			tex->h = h;
+			uint32_t* test = new uint32_t;
+			SQUE_TEXTURE_GenBufferIDs(1, test); // it allocate?
+			tex->id = *test;
+			delete test;
+			SQUE_TEXTURE_AddAttribute(tex, "min_filter", SQUE_MIN_FILTER, SQUE_NEAREST);
+			SQUE_TEXTURE_AddAttribute(tex, "mag_filter", SQUE_MAG_FILTER, SQUE_LINEAR);
 
 			step->framebuffer.depth_type = SQUE_DEPTH16;
 		}
@@ -177,12 +183,10 @@ void SQUE_RenderGraph::UpdateNodeOptions(RenderStep* step)
 	if (shader_drag != NULL && (AssetManager_GetConstAsset(shader_drag->file_id)->type == FT_FRAG_SHADER))
 		AssetManager_SetAssetUser(&step->frag_source_id, shader_drag->file_id);
 
-	ImGui::PushItemWidth(max.x - min.x);
 	ImDrawList* draw_list = ImGui::GetWindowDrawList();
 	int line_w = 5;
 	draw_list->AddLine(ImVec2(min.x,max.y+line_w*2), ImVec2(max.x, max.y+line_w*2), ImGui::GetColorU32(ImVec4(.5,.5,.5,1)), line_w);
-
-	ImGui::PopItemWidth();
+	ImGui::SetCursorPosY(ImGui::GetCursorPosY() + line_w * 2);
 }	
 
 void SQUE_RenderGraph::UpdateNodeInputs(RenderStep* step)
@@ -207,7 +211,7 @@ void SQUE_RenderGraph::UpdateNodeInputs(RenderStep* step)
 		ImGui::SameLine();
 
 		const char* type_string = RenderType_String(inputs[i].type);
-		ImGui::Text(" - %s##InValueOption%d", type_string, i);
+		ImGui::Text("(%s)", type_string);
 
 		ImNodes::EndInputAttribute();
 
@@ -218,6 +222,7 @@ void SQUE_RenderGraph::UpdateNodeInputs(RenderStep* step)
 void SQUE_RenderGraph::UpdateNodeOutputs(RenderStep* step)
 {
 	// Outputs
+	ImGui::Indent(80);
 	static char options[32];
 	sque_vec<SQUE_Texture>& outputs = step->framebuffer.textures;
 	sque_vec<std::string> tex_names = step->texture_names;
@@ -245,6 +250,7 @@ void SQUE_RenderGraph::UpdateNodeOutputs(RenderStep* step)
 		ImNodes::EndInputAttribute();
 		// TODO: Pop Color styles
 	}
+	ImGui::Unindent(80);
 }
 
 void SQUE_RenderGraph::Update(float dt)
@@ -279,18 +285,12 @@ void SQUE_RenderGraph::Update(float dt)
 			ImNodes::BeginNode(step->id);
 			
 			UpdateNodeTitleBar(step);
+			// TODO: Add Line
 			UpdateNodeOptions(step);
 
 			ImGui::PushItemWidth(64 * 3 - 20);
 
 			UpdateNodeInputs(step);
-			
-			ImVec2 node_dimentions = ImNodes::GetNodeDimensions(step->id);
-			ImVec2 sep_pos = ImGui::GetCursorScreenPos();
-			sep_pos.y += 5;
-			ImDrawList* draw_list = ImGui::GetWindowDrawList();
-			draw_list->AddLine(sep_pos, ImVec2(sep_pos.x + node_dimentions.x-20, sep_pos.y), ImGui::GetColorU32(ImVec4(.5, .5, .5, 1)), 5);
-			ImGui::SetCursorPosY(sep_pos.y - 55);
 			UpdateNodeOutputs(step);
 
 			//ImGui::Unindent(node_dimentions.x / 3 - 30);
@@ -359,6 +359,8 @@ void SQUE_RenderGraph::Update(float dt)
 		UpdateRMMenu();
 	}
 	ImGui::End();
+
+	delete selected;
 }
 
 void SQUE_RenderGraph::CleanUp()

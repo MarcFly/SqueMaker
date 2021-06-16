@@ -3,7 +3,6 @@
 
 static sque_vec<SQUE_CtrlAsset> assets;
 static sque_vec<SQUE_Dir> directories;
-static sque_vec<SQUE_Dir*> base_parents;
 static double unused_time_unload_ms = 5000;
 static sque_dyn_arr<ImportFileFun*> import_funs = { FILE_IMPORTER_TABLE(EXPAND_AS_VALUE) };
 static sque_dyn_arr<LoadUnloadFun*> load_funs = { FILE_LOAD_UNLOAD_TABLE(EXPAND_AS_ENUM) };
@@ -69,8 +68,6 @@ uint32_t AssetManager_DeclareAsset(const char* name, const char* location)
 		}
 
 		directories.push_back(new_dir);
-		if (new_dir.parent_id == -1)
-			base_parents.push_back(directories.last());
 
 		new_asset.dir_id = new_dir.id;
 	}
@@ -162,9 +159,13 @@ void AssetManager_HandleDropFile(const char* location)
 	if(const_get != NULL) import_funs[rel_type](const_get);
 }
 
-const sque_vec<SQUE_Dir*>& AssetManager_GetBaseDirs()
+const sque_vec<SQUE_Dir*> AssetManager_GetBaseDirs()
 {
-	return base_parents;
+	sque_vec<SQUE_Dir*> ret;
+	for (uint16_t i = 0; i < directories.size(); ++i)
+		if (directories[i].parent_id == -1)
+			ret.push_back(&directories[i]);
+	return ret;
 }
 
 const SQUE_Dir* AssetManager_GetDir(const uint32_t id)
@@ -302,16 +303,17 @@ void AssetManager_Init()
 	sprintf(resources, "%s%cResources",exec_path, FOLDER_ENDING);
 
 	SQUE_FS_GenDirectoryStructure(assets, &directories);
-	base_parents.push_back(directories.begin());
 	int last = directories.size();
 	SQUE_FS_GenDirectoryStructure(resources, &directories);
-	base_parents.push_back(&directories[last]);
 
 	delete[] assets;
 	delete[] resources;
 
 	// Setup the variables in the dynarray
 	import_funs[FT_OBJECT] = AssetManager_ImportMesh;
+	load_funs[FT_OBJECT] = LoadMesh;
+	unload_funs[FT_OBJECT] = UnloadMesh;
+
 	load_funs[FT_VERT_SHADER] = load_funs[FT_FRAG_SHADER] = LoadShader;
 	unload_funs[FT_VERT_SHADER] = unload_funs[FT_FRAG_SHADER] = UnloadShader;
 
@@ -350,16 +352,42 @@ void AssetManager_Update()
 			assets.pop_back();
 		}
 
-		if (CHK_FLAG(assets[i].status_flags, SQ_AS_CHANGED))
+		if (CHK_FLAG(assets[i].status_flags, SQ_AS_CHANGED) && CHK_FLAG(assets[i].status_flags, SQ_AS_LOADED))
 		{
-			if(CHK_FLAG(assets[i].status_flags, SQ_AS_LOADED)) 
-				unload_funs[assets[i].type](&assets[i]);
-			load_funs[assets[i].type](&assets[i]);
-			CLR_FLAG(assets[i].status_flags, SQ_AS_CHANGED);
+			AssetManager_UnloadAsset(&assets[i]);
+			AssetManager_LoadAsset(&assets[i]);
 		}
+		CLR_FLAG(assets[i].status_flags, SQ_AS_CHANGED);
 	}
 
 
+}
+
+void AssetManager_LoadAsset(SQUE_CtrlAsset* asset)
+{
+	if (CHK_FLAG(asset->status_flags, SQ_AS_LOADED))
+		return;
+
+	load_funs[asset->type](asset);
+	SET_FLAG(asset->status_flags, SQ_AS_LOADED);
+	++asset->current_users;
+}
+
+void AssetManager_UnloadAsset(SQUE_CtrlAsset* asset)
+{
+	if (!CHK_FLAG(asset->status_flags, SQ_AS_LOADED))
+		return;
+
+	unload_funs[asset->type](asset);
+	CLR_FLAG(asset->status_flags, SQ_AS_LOADED);
+	if (asset->datapack.data.raw_data != NULL)
+		delete asset->datapack.data.raw_data;
+	if (asset->datapack.metadata.raw_data != NULL)
+		delete asset->datapack.metadata.raw_data;
+
+	asset->datapack.data.raw_data = NULL;
+	asset->datapack.metadata.raw_data = NULL;
+	--asset->current_users;
 }
 
 uint32_t GetFileType(const char* path)
